@@ -2,6 +2,7 @@
 #include "os/CountSem.hpp"
 #include "errno.h"
 #include "iostream"
+#include "etfw_assert.hpp"
 
 using namespace Os;
 
@@ -13,7 +14,7 @@ CountSem::CountSem()
 CountSem::CountSem(const CountVal init_val)
 {
     int err = sem_init(&_Sem, 0, static_cast<unsigned int>(init_val));
-    assert(err == 0 && "Failed to initialize semaphore");
+    ETFW_ASSERT(err == 0, "Failed to initialize semaphore");
     IsInit = true;
 }
 

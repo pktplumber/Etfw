@@ -2,7 +2,7 @@
 #pragma once
 
 #include "os/Task.hpp"
-#include <cassert>
+#include "etfw_assert.hpp"
 #include "iSvc.hpp"
 
 namespace etfw {
@@ -160,7 +160,7 @@ class ActiveRunner : public iSvcRunner
 
         static void task_sm(void* runner)
         {
-            assert(runner != nullptr);
+            ETFW_ASSERT(runner != nullptr, "Null runner passed into task_sm");
             ActiveRunner* runner_ = static_cast<ActiveRunner*>(runner);
             task_sm_start(runner_);
             task_sm_run(runner_);

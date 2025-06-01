@@ -3,6 +3,7 @@
 
 #include <etl/queue_spsc_atomic.h>
 #include "os/CountSem.hpp"
+#include "etfw_assert.hpp"
 
 namespace etfw {
 namespace Msg {
@@ -11,10 +12,11 @@ template <typename T, size_t QDepth>
 class BlockingMsgQueue
 {
     static_assert(QDepth <= 255, "Max Q Depth exceeded");
+
     public:
         BlockingMsgQueue()
         {
-            assert(Sem.init() == Os::CountSem::Status::OP_OK &&
+            ETFW_ASSERT(Sem.init() == Os::CountSem::Status::OP_OK,
                 "Failed to initialize queue semaphore");
         }
 
@@ -35,7 +37,7 @@ class BlockingMsgQueue
             if (Sem.take() == Os::CountSem::Status::OP_OK)
             {
                 bool result = _queue.front(value);
-                assert(result && "Sem available but queue is empty");
+                ETFW_ASSERT(result, "Sem available but queue is empty");
                 _queue.pop();
                 return result;
             }
@@ -47,7 +49,7 @@ class BlockingMsgQueue
             if (Sem.take(timeout_ms) == Os::CountSem::Status::OP_OK)
             {
                 bool result = _queue.front(value);
-                assert(result && "Sem available but queue is empty");
+                ETFW_ASSERT(result, "Sem available but queue is empty");
                 _queue.pop();
                 return result;
             }

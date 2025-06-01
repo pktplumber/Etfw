@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <cassert>
+#include "etfw_assert.hpp"
 
 using namespace Os;
 
@@ -56,9 +56,11 @@ File::Status File::err_to_status(int err)
 
 File::Status File::open(const char* path, File::Mode mode, File::OverwriteType overwrite)
 {
-    assert(path != nullptr);
-    assert(mode > File::OPEN_NO_MODE && mode < File::MAX_OPEN_MODE);
-    assert(overwrite >= File::NO_OVERWRITE && overwrite <= File::MAX_OVERWRITE_TYPE);
+    ETFW_ASSERT(path != nullptr, "File path cannot be null");
+    ETFW_ASSERT(mode > File::OPEN_NO_MODE && mode < File::MAX_OPEN_MODE,
+        "Invalid mode selected");
+    ETFW_ASSERT(overwrite >= File::NO_OVERWRITE && overwrite <= File::MAX_OVERWRITE_TYPE,
+        "Invalid overwrite type selected");
     int32_t flags = 0;
     File::Status status = File::OP_OK;
 
@@ -85,7 +87,7 @@ File::Status File::open(const char* path, File::Mode mode, File::OverwriteType o
         break;
 
     default:
-        assert(0 && "Unknown open mode");
+        ETFW_ASSERT(0, "Unknown open mode");
         break;
     }
 
@@ -114,9 +116,9 @@ void File::close(void)
 
 File::Status File::read(uint8_t* buf, size_t &sz, File::WaitType wait)
 {
-    assert(buf != nullptr);
-    assert(sz > 0);
-    assert(_mode < File::MAX_OPEN_MODE);
+    ETFW_ASSERT(buf != nullptr, "Read buffer cannot be null");
+    ETFW_ASSERT(sz > 0, "Read buffer must be greater than 0");
+    ETFW_ASSERT(_mode < File::MAX_OPEN_MODE, "File mode is invalid");
 
     if (_mode == OPEN_NO_MODE)
     {
@@ -155,9 +157,9 @@ File::Status File::readline(uint8_t* buf, size_t &sz, File::WaitType wait)
 
 File::Status File::write(uint8_t* buf, size_t &sz, File::WaitType wait)
 {
-    assert(buf != nullptr);
-    assert(sz >= 0);
-    assert(_mode < File::Mode::MAX_OPEN_MODE);
+    ETFW_ASSERT(buf != nullptr, "File write buffer cannot be null");
+    ETFW_ASSERT(sz >= 0, "File write buffer size must be greater than 0");
+    ETFW_ASSERT(_mode < File::Mode::MAX_OPEN_MODE, "Write mode is invalid");
 
     if (_mode == File::Mode::OPEN_NO_MODE)
     {
@@ -191,7 +193,8 @@ File::Status File::write(uint8_t* buf, size_t &sz, File::WaitType wait)
 
 File::Status File::size(size_t &result)
 {
-    assert(_mode >= 0 && _mode < File::Mode::MAX_OPEN_MODE);
+    ETFW_ASSERT(_mode >= 0 && _mode < File::Mode::MAX_OPEN_MODE,
+        "Invalid file mode for size check");
     if (_mode == File::Mode::OPEN_NO_MODE)
     {
         return File::Status::NOT_OPENED;

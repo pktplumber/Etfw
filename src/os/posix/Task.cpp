@@ -1,6 +1,6 @@
 
 #include "os/Task.hpp"
-#include <cassert>
+#include "etfw_assert.hpp"
 
 using namespace Os;
 
@@ -67,10 +67,10 @@ Thread::Status Thread::validate_config(Thread::Config& cfg)
 
 void* Thread::runner(void *thread_obj)
 {
-    assert(thread_obj != nullptr &&
+    ETFW_ASSERT(thread_obj != nullptr,
         "Thread object must not be null");
     Thread* thread = static_cast<Thread*>(thread_obj);
-    assert(thread->routine_ != nullptr &&
+    ETFW_ASSERT(thread->routine_ != nullptr,
         "Thread routine cannot be null");
     thread->state_ = Thread::State::RUNNING;
     thread->routine_(thread->arg_);
