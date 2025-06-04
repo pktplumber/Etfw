@@ -22,7 +22,8 @@ class Subscription : public etl::message_broker::subscription
         Subscription(etl::imessage_router& module,
             std::initializer_list<MsgId> ids)
             : etl::message_broker::subscription(module)
-            , IdList(ids)  {}
+            , IdList(ids)
+        {}
         
         Subscription(etl::imessage_router& module, MsgIdContainer &msg_ids)
             : etl::message_broker::subscription(module)

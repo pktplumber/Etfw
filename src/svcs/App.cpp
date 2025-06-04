@@ -11,23 +11,13 @@ Msg::Broker iApp::CmdBroker;
 Msg::Broker iApp::StatusBroker;
 Msg::Broker iApp::WakeupBroker;
 
-Status iApp::start_child(iSvc& child)
+Status iApp::register_child(iSvc& child)
 {
     Status stat = Status::Code::OK;
 
     if (!Children.is_registered(child))
     {
-        if (Children.register_svc(child).success())
-        {
-            stat = child.start();
-            if (stat.success())
-            {
-                log(EtfLog::Level::INFO, 
-                    "Started child service %d (%s)",
-                    child.id(), child.name_raw());
-            }
-        }
-        else
+        if (!Children.register_svc(child).success())
         {
             stat = Status::Code::REGISTRY_FULL;
         }
@@ -38,6 +28,29 @@ Status iApp::start_child(iSvc& child)
     }
 
     return stat;
+}
+
+Status iApp::start_child(iSvc& child)
+{
+    Status stat = register_child(child);
+
+    if (stat.success())
+    {
+        stat = child.start();
+        if (stat.success())
+        {
+            log(EtfLog::Level::INFO, 
+                "Started child service %s (ID = %d)",
+                child.name_raw(), child.id());
+        }
+    }
+
+    return stat;
+}
+
+Status iApp::unregister_all_children()
+{
+    
 }
 
 void iApp::send_cmd(const etl::imessage& msg)

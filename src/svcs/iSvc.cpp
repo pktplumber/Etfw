@@ -5,12 +5,16 @@ using namespace etfw;
 
 iSvc::iSvc(SvcId_t id, Name_t& name):
     Id(id),
-    Name(name)
+    Name(name),
+    IsInit(false),
+    IsStarted(false)
 {}
 
 iSvc::iSvc(SvcId_t id, const char* name):
     Id(id),
-    Name(name)
+    Name(name),
+    IsInit(false),
+    IsStarted(false)
 {}
 
 iSvc::Status iSvc::init(void)
@@ -112,3 +116,13 @@ void iSvc::log(const LogLevel level, const char* format, ...)
     snprintf(m_buf.data(), m_buf.size(), "[%s]: %s", name_raw(), userBuffer.data());
     EtfLog::log(level, m_buf.data());
 }
+
+void iSvc::log(const char* format, ...)
+{
+    va_list args;
+    log(LogLevel::INFO, format, args);
+}
+
+
+/// Registry
+

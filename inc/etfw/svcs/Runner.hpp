@@ -5,6 +5,11 @@
 #include "etfw_assert.hpp"
 #include "iSvc.hpp"
 
+/// Time to wait between checking if child tasks have exited
+#ifndef ETFW_TASK_CLEANUP_DELAY
+#define ETFW_TASK_CLEANUP_DELAY     1000
+#endif
+
 namespace etfw {
 
 class iSvcRunner
@@ -53,16 +58,20 @@ class iSvcRunner
 
         inline bool is_stopped(void) const
         {
-            return ((State == State_t::CREATED) ||
-                    (State == State_t::INITIALIZED) ||
-                    (State == State_t::STOPPED) ||
-                    (State == State_t::EXITED) ||
-                    (State == State_t::ERROR));
+            return (!is_active());
         }
+
+        void stop_children();
 
     protected:
         iSvc* Svc;
         State_t State;
+
+        /// @brief Interface to Svc logger.
+        /// @param level Log severity level
+        /// @param format String to format and write
+        /// @param Args String format arguments
+        void log(const LogLevel level, const char* format, ...);
 };
 
 
@@ -137,19 +146,12 @@ class ActiveRunner : public iSvcRunner
         RunStatus stop() override
         {
             RunStatus status = RunStatus::DONE;
-            printf("\nIN STOP\n");
 
             if (State_t::ACTIVE == State)
             {
-                printf("State is active. Requesting stop\n");
                 State = State_t::STOP_REQUESTED;
                 status = RunStatus::OK;
             }
-            else
-            {
-                printf("State is not active\n");
-            }
-            printf("\nLEAVING STOP\n");
 
             return status;
         }
@@ -174,6 +176,8 @@ class ActiveRunner : public iSvcRunner
                 iSvc::RunStatus stat = task->Svc->pre_run_init();
                 if (iSvc::RunStatus::OK == stat)
                 {
+                    task->log(LogLevel::INFO,
+                        "Task context initialization complete. Starting active runner");
                     task->State = State_t::ACTIVE;
                 }
                 else if (iSvc::RunStatus::DONE == stat)
@@ -189,15 +193,23 @@ class ActiveRunner : public iSvcRunner
 
         static void task_sm_run(ActiveRunner* task)
         {
+            task->log(LogLevel::INFO,
+                "ActiveRunner initialization complete. Starting task");
             while (State_t::ACTIVE == task->State)
             {
                 iSvc::RunStatus stat = task->Svc->process();
                 if (iSvc::RunStatus::DONE == stat)
                 {
+                    task->log(LogLevel::INFO,
+                        "Service returned DONE. Exiting.");
+                    task->stop_children();
+
                     stat = task->Svc->post_run_cleanup();
                     if (iSvc::RunStatus::OK == stat ||
                         iSvc::RunStatus::DONE == stat)
                     {
+                        task->log(LogLevel::INFO,
+                            "ActiveRunner exit cleanup complete. Service stopped.");
                         task->State = State_t::EXITED;
                     }
                     else
@@ -210,18 +222,27 @@ class ActiveRunner : public iSvcRunner
                     task->State = State_t::ERROR;
                 }
             }
-            printf("Exiting process");
         }
 
         static void task_sm_finish(ActiveRunner* task)
         {
             if (State_t::STOP_REQUESTED == task->State)
             {
+                task->log(LogLevel::INFO,
+                    "Stop requested. Exiting active runner service");
+                task->State = State_t::STOPPING;
+                task->stop_children();
+
+                /// TODO: need some sort of wait/async call back for children to stop
+                /// before calling cleanup
+
                 iSvc::RunStatus stat = task->Svc->post_run_cleanup();
                 if (iSvc::RunStatus::OK == stat ||
                     iSvc::RunStatus::DONE == stat)
                 {
                     task->State = State_t::STOPPED;
+                    task->log(LogLevel::INFO,
+                        "Service stopped");
                 }
                 else
                 {

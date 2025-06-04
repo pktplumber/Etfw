@@ -60,16 +60,6 @@ namespace etfw
             {
                 return Status::Code::OK;
             }
-
-            bool is_init(void) const override
-            {
-                return true;
-            }
-
-            bool is_started(void) const override
-            {
-                return Runner.is_active();
-            }
         
         protected:
             Runner_t Runner;

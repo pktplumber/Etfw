@@ -22,9 +22,13 @@ if (NOT EXISTS "${OSAL_SRC_DIR}")
 endif()
 message(STATUS "Using OSAL dir : ${OSAL_SRC_DIR}")
 
+# ~~~~~~ Examples option ~~~~~~
+
+
 # ~~~~~~ Inc ~~~~~~
 set(PUBLIC_INCLUDE_DIR "${ETFW_INC}")
 include_directories(${ETL_DIR}/include)
+include_directories(${PUBLIC_INCLUDE_DIR})
 
 # ~~~~~~ Src ~~~~~~
 add_subdirectory(${ETL_DIR})
@@ -39,12 +43,11 @@ file(GLOB_RECURSE FW_SRCS
 
 # ~~~~~~ Targets ~~~~~~
 add_library(osal_impl STATIC ${OSAL_SRCS})
-target_include_directories(osal_impl PUBLIC ${PUBLIC_INCLUDE_DIR}/etfw)
+target_include_directories(osal_impl PUBLIC "${PUBLIC_INCLUDE_DIR}/etfw")
 target_compile_features(osal_impl PUBLIC cxx_std_17)
 
 add_library(svcs_impl STATIC ${FW_SRCS})
-target_include_directories(svcs_impl PUBLIC ${PUBLIC_INCLUDE_DIR}/etfw)
-#target_link_libraries(svcs_impl PRIVATE osal_impl)
+target_include_directories(svcs_impl PUBLIC "${PUBLIC_INCLUDE_DIR}/etfw")
 target_compile_features(svcs_impl PUBLIC cxx_std_17)
 
 add_library(etfw STATIC)
@@ -52,15 +55,14 @@ target_sources(etfw PRIVATE
     $<TARGET_OBJECTS:svcs_impl>
     $<TARGET_OBJECTS:osal_impl>
 )
-#target_link_libraries(etfw
-#    PUBLIC etfw_impl
-#    PUBLIC osal_impl
-#)
 
 # Public include directories
 target_include_directories(etfw PUBLIC
-    $<BUILD_INTERFACE:${PUBLIC_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:${PUBLIC_INCLUDE_DIR}/etfw>
 )
 
 # Set C++ standard
 target_compile_features(etfw PUBLIC cxx_std_17)
+
+# TODO: make optional
+add_subdirectory(examples)

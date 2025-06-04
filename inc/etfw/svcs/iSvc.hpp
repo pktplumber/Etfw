@@ -3,7 +3,7 @@
 
 #include <cstdint>
 #include <etl/string.h>
-#include <Status.hpp>
+#include "../Status.hpp"
 #include "SvcTypes.hpp"
 #include "SvcRegistry.hpp"
 #include "log/Logger.hpp"
@@ -47,6 +47,8 @@ class iSvc
                 NO_MEM,             //< 
                 UNKNOWN_ERR,        //< 
                 INVALID_STATE,      //< 
+                ALREADY_REGISTERED,
+                UNKNOWN_REGISTRATION_ERR,
             };
 
             /// @brief Status code string messages
@@ -80,6 +82,82 @@ class iSvc
             OK,
             DONE,
             ERROR,
+        };
+
+        class iRegistry
+        {
+            public:
+                virtual iSvc** data() = 0;
+
+                virtual size_t size() = 0;
+
+                //iSvc* begin() {return data();}
+                //iSvc* end() {return data() + size();}
+        };
+
+        template <typename T, size_t MaxNumSvcs>
+        class Registry : public iRegistry
+        {
+            public:
+                using SvcContainer_t = etl::vector<T*, MaxNumSvcs>;
+                
+                Registry(){}
+
+                iSvc** data() override { return Svcs.data(); }
+                size_t size() override { return Svcs.size(); }
+
+                Status register_svc(T& svc)
+                {
+                    if (is_registered(svc.id()))
+                    {
+                        return Status::Code::ALREADY_REGISTERED;
+                    }
+
+                    size_t num_registered_svcs = Svcs.size();
+                    if (num_registered_svcs == MaxNumSvcs)
+                    {
+                        return Status::Code::REGISTRY_FULL;
+                    }
+
+                    Svcs.push_back(&svc);
+                    if (Svcs.size() != num_registered_svcs+1)
+                    {
+                        return Status::Code::UNKNOWN_REGISTRATION_ERR;
+                    }
+
+                    return Status::Code::OK;
+                }
+
+                T* find_svc(const SvcId_t svc_id)
+                {
+                    T* ret = nullptr;
+                    for (auto &svc: Svcs)
+                    {
+                        if (svc->id() == svc_id)
+                        {
+                            ret = svc;
+                            break;
+                        }
+                    }
+                    return ret;
+                }
+
+                bool is_registered(T& svc)
+                {
+                    return is_registered(svc.id());
+                }
+
+                bool is_registered(const SvcId_t svc_id)
+                {
+                    if (find_svc(svc_id) == nullptr)
+                    {
+                        return false;
+                    }
+                    return true;
+                }
+            
+            private:
+                SvcContainer_t Svcs;
         };
 
         /// @brief Initialize the component data + objects. Must be called before start.
@@ -131,6 +209,23 @@ class iSvc
         /// @retval [ERROR] Service has encountered a cleanup error.
         virtual RunStatus post_run_cleanup() { return RunStatus::OK; }
 
+        virtual iRegistry* children() { return nullptr; }
+
+        friend class iSvcRunner;
+
+    protected:
+        /// @brief Construct a new Svc object
+        /// 
+        /// @param id Service Id
+        /// @param name Service name
+        iSvc(SvcId_t id, Name_t& name);
+
+        /// @brief Construct a new Svc object
+        /// 
+        /// @param id Service Id
+        /// @param name Service name
+        iSvc(SvcId_t id, const char* name);
+
         /// @brief Returns the service's runner object
         /// @return Pointer to service runner.
         virtual iSvcRunner* runner() = 0;
@@ -153,24 +248,16 @@ class iSvc
         /// @return Svc status
         virtual Status cleanup_() = 0;
 
-    protected:
-        /// @brief Construct a new Svc object
-        /// 
-        /// @param id Service Id
-        /// @param name Service name
-        iSvc(SvcId_t id, Name_t& name);
-
-        /// @brief Construct a new Svc object
-        /// 
-        /// @param id Service Id
-        /// @param name Service name
-        iSvc(SvcId_t id, const char* name);
-
         /// @brief Formats and logs a service message. 
         /// @param level Log level
         /// @param format String/format to log.
         /// @param Args String format arguments
         void log(const LogLevel level, const char* format, ...);
+
+        /// @brief Default log method. Formats and logs a INFO service message.
+        /// @param format String/format to log.
+        /// @param Args String format arguments
+        void log(const char* format, ...);
     
     private:
         SvcId_t Id;

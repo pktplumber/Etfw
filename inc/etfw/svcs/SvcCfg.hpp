@@ -66,42 +66,42 @@ namespace etfw {
             TMsgs...>;
     };
 
-    template <etfw::SvcId_t TId, typename TRunnerTrait, typename TChildren = TypeList<>>
-    struct SvcCfg;
+    //template <etfw::SvcId_t TId, typename TRunnerTrait>
+    //struct SvcCfg;
 
-    template <etfw::SvcId_t TId, typename TRunnerTrait, typename... TChildren>
-    struct SvcCfg<TId, TRunnerTrait, TypeList<TChildren...>>
+    template <etfw::SvcId_t TId, typename TRunnerTrait>
+    struct SvcCfg
     {
         //static_assert(
         //    std::is_base_of<SvcRunTrait, PassiveSvcCfg>::value ||
         //    std::is_base_of<SvcRunTrait, ActiveSvcCfg>::value,
         //    "RunnerTrait must derive from PassiveSvcCfg or ActiveSvcCfg");
 
-        private:
-            template<typename T, size_t I>
-            static iSvc* construct()
-            {
-                return new (ChildrenBuf[I]) T();
-            }
+        //private:
+        //    template<typename T, size_t I>
+        //    static iSvc* construct()
+        //    {
+        //        return new (ChildrenBuf[I]) T();
+        //    }
 
-        public:
-            using ChildrenStorageTraits = MaxSizeAlign<TChildren...>;
-            static constexpr size_t MaxChildSz = ChildrenStorageTraits::size;
-            static constexpr size_t ChildAlign = ChildrenStorageTraits::align;
+        //public:
+            //using ChildrenStorageTraits = MaxSizeAlign<TChildren...>;
+            //static constexpr size_t MaxChildSz = ChildrenStorageTraits::size;
+            //static constexpr size_t ChildAlign = ChildrenStorageTraits::align;
 
-            alignas(ChildAlign) static inline uint8_t ChildrenBuf[sizeof...(TChildren)][MaxChildSz];
+            //alignas(ChildAlign) static inline uint8_t ChildrenBuf[sizeof...(TChildren)][MaxChildSz];
 
-            static inline iSvc* children[sizeof...(TChildren)] =
-            {
-                construct<TChildren, index>()...
-            };
+            //static inline iSvc* children[sizeof...(TChildren)] =
+            //{
+            //    construct<TChildren, index>()...
+            //};
 
             /// @brief Service ID configuration
             static constexpr etfw::SvcId_t ID = TId;
 
             /// @brief Runner type
             using RunnerCfg = TRunnerTrait;
-            using ChildrenTs = TypeList<TChildren...>;
+            //using ChildrenTs = TypeList<TChildren...>;
     };
 
     template <uint8_t TPriority, size_t TStackSz>

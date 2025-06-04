@@ -13,7 +13,7 @@ namespace etfw {
     {
         public:
             /// TODO: probably need to refactor to some sort of list
-            using ChildRegistry = SvcRegistry<iSvc, MAX_NUM_CHILD_SVCS>;
+            using ChildRegistry = iSvc::Registry<iSvc, MAX_NUM_CHILD_SVCS>;
             using Status = iSvc::Status;
 
             /// @brief App interface constructor
@@ -43,17 +43,21 @@ namespace etfw {
 
             /// @brief Get application children
             /// @return App children registry
-            inline ChildRegistry& children() { return Children; }
+            iSvc::iRegistry* children() override { return &Children; }
 
             /// @brief Sends a command message to all subscribed applications
             /// @param msg Message to send
             static void send_cmd(const etl::imessage& msg);
 
         protected:
+            Status register_child(iSvc& child);
+
             /// @brief Registers and starts child service
             /// @param child Child service
             /// @return Registration/start status code
             Status start_child(iSvc& child);
+
+            Status unregister_all_children();
 
             /// @brief Subscribes a message router to a set of commands
             /// @param msgs Subscription class containing the router and commands
@@ -161,16 +165,6 @@ namespace etfw {
             Status cleanup_(void) override
             {
                 return static_cast<Derived*>(this)->app_cleanup();
-            }
-
-            bool is_init(void) const override
-            {
-                return true;
-            }
-
-            bool is_started(void) const override
-            {
-                return Runner.is_active();
             }
         
         protected:
