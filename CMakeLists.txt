@@ -4,6 +4,7 @@ cmake_minimum_required(VERSION 3.15)
 project(etfw VERSION 1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Wall")
 
 # ~~~~~~ Vars ~~~~~~
 set(ETFW_INC "${CMAKE_SOURCE_DIR}/inc/")
@@ -23,7 +24,7 @@ endif()
 message(STATUS "Using OSAL dir : ${OSAL_SRC_DIR}")
 
 # ~~~~~~ Examples option ~~~~~~
-
+option(EXAMPLES "Compile examples" OFF)
 
 # ~~~~~~ Inc ~~~~~~
 set(PUBLIC_INCLUDE_DIR "${ETFW_INC}")
@@ -64,5 +65,8 @@ target_include_directories(etfw PUBLIC
 # Set C++ standard
 target_compile_features(etfw PUBLIC cxx_std_17)
 
-# TODO: make optional
-add_subdirectory(examples)
+# Compile examples if included
+if(EXAMPLES)
+    message(STATUS "Compiling example executables")
+    add_subdirectory(examples)
+endif()

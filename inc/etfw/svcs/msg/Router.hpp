@@ -21,16 +21,16 @@ namespace Msg {
      * @tparam TMsgs Message structs.
      */
     template <typename THandler, size_t TMsgLimit, typename... TMsgs>
-    class MsgRtr : public etl::message_router<
-        MsgRtr<THandler, TMsgLimit, TMsgs...>,
+    class Router : public etl::message_router<
+        Router<THandler, TMsgLimit, TMsgs...>,
         TMsgs...>
     {
         public:
             using Base_t = etl::message_router<
-                MsgRtr<THandler, TMsgLimit, TMsgs...>,
+                Router<THandler, TMsgLimit, TMsgs...>,
                 TMsgs...>;
 
-            MsgRtr(THandler& component):
+            Router(THandler& component):
                 Base_t(static_cast<etl::message_id_t>(component.ID)),
                 Handler_(component),
                 IdList(to_msg_id_list<TMsgs...>()),
@@ -67,13 +67,13 @@ namespace Msg {
      * @tparam TMsgs Message types
      */
     template <typename THandler, size_t TMsgLimit, typename... TMsgs>
-    class QueuedMsgRtr : public MsgRtr<THandler, TMsgLimit, TMsgs...>
+    class QueuedRouter : public Router<THandler, TMsgLimit, TMsgs...>
     {
         public:
-            using Base_t = MsgRtr<THandler, TMsgLimit, TMsgs...>;
+            using Base_t = Router<THandler, TMsgLimit, TMsgs...>;
             using Base_t::accepts;
 
-            QueuedMsgRtr(THandler& component):
+            QueuedRouter(THandler& component):
                 Base_t(component),
                 Enabled(true) {}
 

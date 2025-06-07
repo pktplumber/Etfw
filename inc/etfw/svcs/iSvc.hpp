@@ -176,6 +176,18 @@ class iSvc
         /// @return Svc status
         Status cleanup();
 
+        /// @brief  Checks if the service has been initialized successfully.
+        /// @return Initialization status
+        /// @retval true The service is initialized and ready to run.
+        /// @retval false The service is unitinialized
+        inline bool is_init() const { return IsInit; }
+
+        /// @brief  Checks if the service has been started/is active.
+        /// @return Running status
+        /// @retval true The service is active/running.
+        /// @retval false The service is innactive/stopped.
+        inline bool is_started() const { return IsStarted; }
+
         /// @brief Gets the service ID. 
         /// @return Service ID.
         inline SvcId_t id() const { return Id; }

@@ -91,14 +91,6 @@ namespace etfw {
         template <MsgModuleId_t TModId>
         struct NoopCmd : etl::message<to_msg_id<TModId, 
             static_cast<uint8_t>(CommonCmdCodes::NOOP)>()> {};
-
-
-        struct Msg : public etl::message<
-        template <MsgModuleId_t TModId>
-        struct WakeupMsg
-        {
-            /* data */
-        };
         
 
     }

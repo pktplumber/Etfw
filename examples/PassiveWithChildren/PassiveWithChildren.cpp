@@ -2,7 +2,7 @@
 #include "etfw/svcs/App.hpp"
 #include "etfw/svcs/SvcCfg.hpp"
 #include "etfw/svcs/AppChild.hpp"
-#include "etfw/svcs/msg/MsgRtr.hpp"
+#include "etfw/svcs/msg/Router.hpp"
 
 static constexpr etfw::SvcId_t AppId = 1;
 
@@ -166,7 +166,7 @@ class ExampleApp : public etfw::App<ExampleApp, AppCfg>
         AppChild<Child1Cfg> child1;
         AppChild<Child2Cfg> child2;
 
-        etfw::Msg::MsgRtr<ExampleApp, 1, StartChild2Cmd> msg_rtr;
+        etfw::Msg::Router<ExampleApp, 1, StartChild2Cmd> msg_rtr;
 };
 
 int main()
@@ -194,4 +194,6 @@ int main()
     app.stop();
     usleep(1000000);
     app.cleanup();
+
+    return 0;
 }

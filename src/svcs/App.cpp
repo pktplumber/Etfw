@@ -50,7 +50,7 @@ Status iApp::start_child(iSvc& child)
 
 Status iApp::unregister_all_children()
 {
-    
+    return Status::Code::UNKNOWN_ERR;
 }
 
 void iApp::send_cmd(const etl::imessage& msg)

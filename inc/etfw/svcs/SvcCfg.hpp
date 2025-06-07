@@ -3,9 +3,9 @@
 
 #include "SvcTypes.hpp"
 #include "Runner.hpp"
-#include "msg/MsgRtr.hpp"
+#include "msg/Router.hpp"
 #include <string>
-#include <type_traits>
+#include "CommonTraits.hpp"
 
 namespace etfw {
 
@@ -19,9 +19,6 @@ namespace etfw {
         template <template <typename...> class Target>
         using ExpandTo = Target<Ts...>;
     };
-
-    template<typename T, typename... Ts>
-    constexpr bool all_derived_from = (std::is_base_of_v<T, Ts> && ...);
 
     // Trait to compute max size and align
     template<typename... Ts>
@@ -39,31 +36,18 @@ namespace etfw {
         using Runner_t = etfw::PassiveRunner;
 
         template <typename TConcreteSvc, typename... TMsgs>
-        using MsgHandler_t = etfw::Msg::MsgRtr<TConcreteSvc, 0, TMsgs...>;
+        using MsgHandler_t = etfw::Msg::Router<TConcreteSvc, 0, TMsgs...>;
 
         template <typename TConcreteSvc, typename... TMsgs>
         using CmdHandler_t = MsgHandler_t<TConcreteSvc, TMsgs...>;
     };
 
-    template <uint8_t TPriority, size_t TStackSz, size_t TCmdQDepth>
+    template <uint8_t TPriority, size_t TStackSz>
     struct ActiveSvcCfg : public SvcRunTrait
     {
         static constexpr uint8_t PRIORITY = TPriority;
         static constexpr size_t STACK_SZ = TStackSz;
-        static constexpr size_t CMD_QDEPTH = TCmdQDepth;
         using Runner_t = etfw::ActiveRunner<TPriority, TStackSz>;
-
-        template <typename TConcreteSvc, size_t TMsgLimit, typename... TMsgs>
-        using MsgHandler_t = etfw::Msg::QueuedMsgRtr<
-            TConcreteSvc,
-            TMsgLimit,
-            TMsgs...>;
-
-        template <typename TConcreteSvc, typename... TMsgs>
-        using CmdHandler_t = MsgHandler_t<
-            TConcreteSvc,
-            TCmdQDepth,
-            TMsgs...>;
     };
 
     //template <etfw::SvcId_t TId, typename TRunnerTrait>
