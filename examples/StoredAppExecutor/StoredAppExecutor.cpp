@@ -55,18 +55,15 @@ class ExampleActiveApp : public etfw::App<ExampleActiveApp<TCfg>, TCfg>
         }
 };
 
-etfw::StaticExecutor<ExampleActiveApp<App2Cfg>, ExampleActiveApp<App4Cfg>> Exec;
+using App2 = ExampleActiveApp<App2Cfg>;
+using App4 = ExampleActiveApp<App4Cfg>;
+
+etfw::StaticExecutor<App2, App4> Exec;
 
 int main()
 {
-    //ExampleActiveApp<App2Cfg> app1;
-    //ExampleActiveApp<App4Cfg> app2;
-    //Exec.register_app(app1);
-    //Exec.register_app(app2);
-    //Exec.register_all();
-    Exec.test();
-    Exec.register_all();
-    Exec.start_all();
+    Exec.run();
+
     while(1)
     {}
     return 0;

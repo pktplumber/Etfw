@@ -4,8 +4,11 @@
 #include <cstdint>
 #include <cstddef>
 #include <variant>
-#include "CommonTraits.hpp"
 
+#include <etl/variant.h>
+#include <etl/visitor.h>
+
+#include "CommonTraits.hpp"
 #include "../Status.hpp"
 #include "SvcTypes.hpp"
 #include "App.hpp"
@@ -131,67 +134,52 @@ namespace etfw
         static_assert(all_derived_from<iApp, TApps...>::value);
 
         public:
-            using AppVariant_t = std::variant<TApps...>;
-            using AppContainer = std::array<AppVariant_t, sizeof...(TApps)>;
+            using AppVariant_t = etl::variant<TApps...>;
+            using AppStorage_t = etl::array<AppVariant_t, sizeof...(TApps)>;
             using Base_t = Executor<sizeof...(TApps)>;
             using Base_t::register_app;
             using Base_t::start_all;
             using Status = typename Base_t::Status;
 
             StaticExecutor():
-                AppStorage(init_storage(std::index_sequence_for<TApps...>{}))
+                AppStorage(init_storage(etl::index_sequence_for<TApps...>{}))
             {}
 
+            /// @brief Initializes and runs all applications.
             void run()
             {
                 for (auto& app_variant: AppStorage)
                 {
-                    std::visit([this](auto& app)
+                    etl::visit([this](auto& app)
                     {
-                        Status stat = register_app(&app);
+                        register_app(&app);
                     }, app_variant);
                 }
 
                 start_all();
             }
-
-            void register_all()
-            {
-                for (auto& var: AppStorage)
-                {
-                    std::visit([this](auto& app)
-                    {
-                        register_app(&app);
-                    }, var);
-                }
-            }
-
-            void test()
-            {
-                for (auto& var: AppStorage)
-                {
-                    std::visit([this](auto& app)
-                    {
-                    }, var);
-                }
-            }
         
         private:
             static constexpr size_t NumApps = sizeof...(TApps);
-            std::array<AppVariant_t, NumApps> AppStorage;
+            AppStorage_t AppStorage;
 
+            /// @brief Constructs and returns an application in place
+            /// @tparam T 
+            /// @return 
             template <typename T>
-            static AppVariant_t make_in_place_variant()
+            static AppVariant_t construct_var_in_place()
             {
                 AppVariant_t var;
                 var.template emplace<T>();  // construct in-place
                 return var;
             }
 
+            /// @brief Compile-time app storage builder
+            /// @tparam ...Idxs Array indices
             template <size_t... Idxs>
-            static AppContainer init_storage(std::index_sequence<Idxs...>)
+            static AppStorage_t init_storage(etl::index_sequence<Idxs...>)
             {
-                return {make_in_place_variant<TApps>()...};
+                return {construct_var_in_place<TApps>()...};
             }
     };
 
