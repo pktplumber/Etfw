@@ -1,9 +1,12 @@
 
 #include "svcs/Executor.hpp"
+#include "svcs/log/Logger.hpp"
 
 using namespace etfw;
 
 using Status = iExecutor::Status;
+
+#define __LOG(lvl, fmt, args)   EtfLog::log(lvl, "EXEC", fmt, args)
 
 iExecutor::Node_t iExecutor::find(const SvcId_t id)
 {
@@ -170,6 +173,10 @@ Status iExecutor::start(const SvcId_t app_id)
                 iSvc::Status svc_stat = app->init();
                 if (svc_stat.success())
                 {
+                    EtfLog::log(LogLevel::INFO,
+                        "EXEC",
+                        "%s app (ID = %d) initialized",
+                        app->name_raw(), app->id());
                     stat = start_svc(app);
                 }
                 else
@@ -197,7 +204,7 @@ Status iExecutor::start(const SvcId_t app_id)
 
 Status iExecutor::stop_all()
 {
-    for (auto &app: Apps)
+    for (auto& app: Apps)
     {
         if (app->is_started())
         {
@@ -206,4 +213,47 @@ Status iExecutor::stop_all()
     }
 
     return Status::Code::OK;
+}
+
+Status iExecutor::stop(const SvcId_t app_id)
+{
+    Status stat = Status::Code::OK;
+    iApp* app = find(app_id);
+    if (app != nullptr)
+    {
+        if (app->is_started())
+        {
+            iSvc::Status svc_stat = app->stop();
+            if (svc_stat.success())
+            {
+                EtfLog::log(LogLevel::INFO,
+                    "EXEC",
+                    "Stopped %s app. (ID = %d)",
+                    app->name_raw(), app->id());
+            }
+            else
+            {
+                EtfLog::log(LogLevel::ERROR,
+                    "EXEC",
+                    "App stop failure. %s app (ID = %d). %s",
+                    app->name_raw(), app->id(), svc_stat.str());
+            }
+        }
+        else
+        {
+            EtfLog::log(LogLevel::INFO,
+                "EXEC",
+                "App already stopped. %s (ID = %d) is not running",
+                app->name_raw(), app->id());
+        }
+    }
+    else
+    {
+        EtfLog::log(LogLevel::ERROR,
+                    "EXEC",
+                    "App stop failure. %s app (ID = %d) is not registered",
+                    app->name_raw(), app->id());
+    }
+
+    return stat;
 }

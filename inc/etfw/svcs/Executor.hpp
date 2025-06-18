@@ -87,8 +87,10 @@ namespace etfw
 
             Status stop(const SvcId_t app_id);
 
-            Status exit();
-        
+            Status run() { return start_all(); }
+
+            Status exit() { return stop_all(); }
+
         protected:
             iExecutor(iAppContainer& apps, const size_t max_num_apps):
                 Apps(apps),
@@ -124,12 +126,12 @@ namespace etfw
     };
 
     /// @brief Static storage and run-time manager for applications.
-    /// @details StaticExecutor stores, constructs, and application objects. Applications
+    /// @details AppExecutor stores, constructs, and application objects. Applications
     ///          must derive from the iApp class. Also, there is only one instance of
     //           each application type allowed in the template list arguments.
     /// @tparam ...TApps Default-constructable, iApp-derived types. No duplicate types allowed.
     template <typename... TApps>
-    class StaticExecutor : public Executor<sizeof...(TApps)>
+    class AppExecutor : public Executor<sizeof...(TApps)>
     {
         static_assert(all_derived_from<iApp, TApps...>::value);
 
@@ -138,15 +140,10 @@ namespace etfw
             using AppStorage_t = etl::array<AppVariant_t, sizeof...(TApps)>;
             using Base_t = Executor<sizeof...(TApps)>;
             using Base_t::register_app;
-            using Base_t::start_all;
-            using Status = typename Base_t::Status;
 
-            StaticExecutor():
+            /// @brief AppExecutor constructor. Initializes and registers applications. 
+            AppExecutor():
                 AppStorage(init_storage(etl::index_sequence_for<TApps...>{}))
-            {}
-
-            /// @brief Initializes and runs all applications.
-            void run()
             {
                 for (auto& app_variant: AppStorage)
                 {
@@ -155,10 +152,8 @@ namespace etfw
                         register_app(&app);
                     }, app_variant);
                 }
-
-                start_all();
             }
-        
+
         private:
             static constexpr size_t NumApps = sizeof...(TApps);
             AppStorage_t AppStorage;

@@ -1,0 +1,3 @@
+This folder contains the code for a sample executive application. The ExecApp is responsible for initializing and managing all applications. This includes providing command and status messages to control and monitor application run states.
+
+If the user would rather build a custom executive application, this code can be ignored. It's still suggested to use the "AppExecutor" class for managing application storage.

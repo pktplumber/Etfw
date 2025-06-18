@@ -20,21 +20,28 @@ namespace Os
 
             using CountVal = uint32_t;
 
+            /// @brief Constructor. Initializes semaphore to 0
             CountSem();
 
+            /// @brief Constructor. Initializes semaphore to init_val
+            /// @param init_val Count value to initialize
             CountSem(const CountVal init_val);
 
+            /// @brief Deconstructor
             ~CountSem();
 
-            Status give(void) noexcept;
+            /// @brief 
+            /// @param  
+            /// @return 
+            Status give() noexcept;
 
-            Status take(void) noexcept;
+            Status take() noexcept;
 
             Status take(const TimeMs_t time_ms) noexcept;
 
-            Status init(CountVal val) noexcept;
+            Status init(const CountVal val) noexcept;
 
-            Status init(void) noexcept { return init(0); }
+            Status init() noexcept { return init(0); }
 
             static size_t CountSemCount;
 

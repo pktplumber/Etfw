@@ -97,7 +97,7 @@ CountSem::Status CountSem::take(const TimeMs_t time_ms) noexcept
     return CountSem::Status::ERR;
 }
 
-CountSem::Status CountSem::init(CountVal val) noexcept
+CountSem::Status CountSem::init(const CountVal val) noexcept
 {
     if (!IsInit)
     {

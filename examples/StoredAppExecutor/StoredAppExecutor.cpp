@@ -58,13 +58,25 @@ class ExampleActiveApp : public etfw::App<ExampleActiveApp<TCfg>, TCfg>
 using App2 = ExampleActiveApp<App2Cfg>;
 using App4 = ExampleActiveApp<App4Cfg>;
 
-etfw::StaticExecutor<App2, App4> Exec;
+etfw::AppExecutor<App2, App4> Exec;
 
 int main()
 {
     Exec.run();
 
-    while(1)
-    {}
+    usleep(5000000);
+
+    Exec.stop(App4Id);
+
+    usleep(5000000);
+
+    Exec.start(App4Id);
+
+    usleep(5000000);
+
+    Exec.exit();
+
+    usleep(1000000);
+
     return 0;
 }
