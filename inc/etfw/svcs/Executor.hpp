@@ -7,6 +7,7 @@
 
 #include <etl/variant.h>
 #include <etl/visitor.h>
+#include <etl/utility.h>
 
 #include "CommonTraits.hpp"
 #include "../Status.hpp"
@@ -143,7 +144,7 @@ namespace etfw
 
             /// @brief AppExecutor constructor. Initializes and registers applications. 
             AppExecutor():
-                AppStorage(init_storage(etl::index_sequence_for<TApps...>{}))
+                AppStorage(init_storage(etl::make_index_sequence<sizeof...(TApps)>{}))
             {
                 for (auto& app_variant: AppStorage)
                 {

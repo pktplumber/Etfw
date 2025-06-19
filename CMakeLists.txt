@@ -7,11 +7,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Wall")
 
 # ~~~~~~ Vars ~~~~~~
-set(ETFW_INC "${CMAKE_SOURCE_DIR}/inc/")
-set(ETFW_SVC_SRC "${CMAKE_SOURCE_DIR}/src/svcs")
-set(ETFW_OSAL_SRC "${CMAKE_SOURCE_DIR}/src/os")
+set(ETFW_INC "${CMAKE_CURRENT_SOURCE_DIR}/inc/")
+set(ETFW_SVC_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/svcs")
+set(ETFW_OSAL_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/os")
 set(DEFAULT_OSAL_SRC_DIR "${ETFW_OSAL_SRC}/posix")
-set(ETL_DIR "${CMAKE_SOURCE_DIR}/deps/etl")
+set(ETL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/etl")
 
 # ~~~~~~ Osal option ~~~~~~
 set(OSAL_SRC_DIR "" CACHE PATH "Path to the b-specific source directory to compile")
@@ -61,6 +61,9 @@ target_sources(etfw PRIVATE
 target_include_directories(etfw PUBLIC
     $<BUILD_INTERFACE:${PUBLIC_INCLUDE_DIR}/etfw>
 )
+
+target_link_libraries(etfw
+    PUBLIC etl::etl)
 
 # Set C++ standard
 target_compile_features(etfw PUBLIC cxx_std_17)
