@@ -3,7 +3,7 @@
 
 #include <cstdint>
 #include <etl/string.h>
-#include "../Status.hpp"
+#include "../status.hpp"
 #include "SvcTypes.hpp"
 #include "SvcRegistry.hpp"
 #include "log/Logger.hpp"

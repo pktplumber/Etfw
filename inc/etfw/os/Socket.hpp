@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <cstdint>
+#include "etfw/status.hpp"
 
 namespace Os
 {
@@ -46,40 +47,22 @@ class Sock
 
             Address():
                 Addr(nullptr),
-                Port(0) {}
+                Port(0)
+            {}
             
             Address(const char *addr, uint16_t port):
                 Addr(addr),
-                Port(port) {}
+                Port(port)
+            {}
         };
 
-        Sock():
-            Fd(Os::OS_INVALID_FD),
-            SockType(DGRAM),
-            Domain(IPv4),
-            IsOpen(false),
-            IsBound(false) {}
+        Sock();
 
-        Sock(AddressDomain domain):
-            Fd(Os::OS_INVALID_FD),
-            SockType(DGRAM),
-            Domain(domain),
-            IsOpen(false),
-            IsBound(false) {}
+        Sock(AddressDomain domain);
 
-        Sock(Type type):
-            Fd(Os::OS_INVALID_FD),
-            SockType(type),
-            Domain(IPv4),
-            IsOpen(false),
-            IsBound(false) {}
+        Sock(Type type);
 
-        Sock(AddressDomain domain, Type type):
-            Fd(Os::OS_INVALID_FD),
-            SockType(type),
-            Domain(domain),
-            IsOpen(false),
-            IsBound(false) {}
+        Sock(AddressDomain domain, Type type);
 
         Status open() noexcept;
 
@@ -89,15 +72,46 @@ class Sock
 
         Status receive(uint8_t* &buf, size_t &sz) noexcept;
 
-        Status send(uint8_t* &buf, size_t &sz, Address &address) noexcept;
+        Status send(uint8_t* buf, size_t &sz, Address &address) noexcept;
 
-        inline Os::OsFd_t fd(void) const noexcept { return Fd; }
+        inline Os::OsFd_t fd(void) const noexcept { return fd_; }
+
+        inline bool is_open() const { return is_open_; }
+
+        inline bool is_bound() const { return is_bound_; }
+
+        inline Type sock_type() const { return sock_type_; }
+
+        inline AddressDomain addr_domain() const { return domain_; }
+
+        Status set_type(Type sock_type)
+        {
+            if (!is_open_ &&
+                !is_bound_)
+            {
+                sock_type_ = sock_type;
+                return Status::OP_OK;
+            }
+            return Status::IS_OPEN;
+        }
+
+        Status set_domain(AddressDomain sock_domain)
+        {
+            if (!is_open_ &&
+                !is_bound_)
+            {
+                domain_ = sock_domain;
+                return Status::OP_OK;
+            }
+            return Status::IS_OPEN;
+        }
+
     private:
-        Os::OsFd_t Fd;
-        Type SockType;
-        AddressDomain Domain;
-        bool IsOpen;
-        bool IsBound;
+        Os::OsFd_t fd_;
+        Type sock_type_;
+        AddressDomain domain_;
+        bool is_open_;
+        bool is_bound_;
 };
 
 } // namespace Os

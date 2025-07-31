@@ -6,7 +6,7 @@
 #include <iostream>
 #include <cstring>
 #include "OsTypes.hpp"
-#include "../Status.hpp"
+#include "../status.hpp"
 
 namespace Os
 {

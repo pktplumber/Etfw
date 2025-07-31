@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <iostream>
+#include "status.hpp"
 
 #ifndef OS_FILE_CHUNK_SZ
 #define OS_FILE_CHUNK_SZ    512
@@ -31,20 +32,38 @@ namespace Os
                 MAX_OPEN_MODE //!< Maximum value of mode
             };
 
-            enum Status {
-                OP_OK           = 0, //!<  Operation was successful
-                DOESNT_EXIST    = -1, //!<  File doesn't exist (for read)
-                NO_SPACE        = -2, //!<  No space left
-                NO_PERMISSION   = -3, //!<  No permission to read/write file
-                BAD_SIZE        = -4, //!<  Invalid size parameter
-                NOT_OPENED      = -5, //!<  file hasn't been opened yet
-                FILE_EXISTS     = -6, //!< file already exist (for CREATE with O_EXCL enabled)
-                NOT_SUPPORTED   = -7, //!< Kernel or file system does not support operation
-                INVALID_MODE    = -8, //!< Mode for file access is invalid for current operation
-                INVALID_ARGUMENT = -9, //!< Invalid argument passed in
-                OTHER_ERROR      = -10, //!<  A catch-all for other errors. Have to look in implementation-specific code
-                MAX_STATUS //!< Maximum value of status
+            struct StatusTrait {
+                enum class Code {
+                    OK, //!<  Operation was successful
+                    DOESNT_EXIST, //!<  File doesn't exist (for read)
+                    NO_SPACE, //!<  No space left
+                    NO_PERMISSION, //!<  No permission to read/write file
+                    BAD_SIZE, //!<  Invalid size parameter
+                    NOT_OPENED, //!<  file hasn't been opened yet
+                    FILE_EXISTS, //!< file already exist (for CREATE with O_EXCL enabled)
+                    NOT_SUPPORTED, //!< Kernel or file system does not support operation
+                    INVALID_MODE, //!< Mode for file access is invalid for current operation
+                    INVALID_ARGUMENT, //!< Invalid argument passed in
+                    OTHER_ERROR, //!<  A catch-all for other errors. Have to look in implementation-specific code
+                };
+
+                static constexpr StatusStr_t ErrStrLkup[] =
+                {
+                    "Success",
+                    "File does not exist",
+                    "No available memory for operation",
+                    "Persmission denied for operation",
+                    "Invalid size argument",
+                    "File is not open",
+                    "Create filaure. File already exists",
+                    "Operation unsupported",
+                    "Invalid access mode",
+                    "Invalid argument",
+                    "Unknown/other error"
+                };
             };
+
+            using Status = EtfwStatus<StatusTrait>;
 
             enum OverwriteType {
                 NO_OVERWRITE, //!< Do NOT overwrite existing files

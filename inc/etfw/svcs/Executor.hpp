@@ -10,7 +10,7 @@
 #include <etl/utility.h>
 
 #include "CommonTraits.hpp"
-#include "../Status.hpp"
+#include "../status.hpp"
 #include "SvcTypes.hpp"
 #include "App.hpp"
 #include "etl/list.h"

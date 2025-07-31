@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <cstddef>
+
 using StatusStr_t = const char*;
 
 template <typename CodeTrait>
@@ -56,6 +58,8 @@ class EtfwStatus final
          * @return Code Value.
          */
         inline Code code(void) const { return code_; }
+
+        operator bool() const { return code_ == Code::OK; }
 
     private:
         Code code_;
