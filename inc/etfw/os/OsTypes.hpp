@@ -17,7 +17,7 @@ namespace Os {
     constexpr OsFd_t OS_MIN_FD = 0;
     using TimeMs_t = uint32_t;
     typedef sem_t SemHandle_t;
-
+    typedef pthread_mutex_t MutexHandle_t;
 #endif // POSIX_COMPLIANT_OS
 
     class OsObj

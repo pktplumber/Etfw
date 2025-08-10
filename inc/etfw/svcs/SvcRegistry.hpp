@@ -3,7 +3,7 @@
 
 #include <etl/vector.h>
 #include "SvcTypes.hpp"
-#include "../Status.hpp"
+#include "../status.hpp"
 //#include "iSvc.hpp"
 
 namespace etfw

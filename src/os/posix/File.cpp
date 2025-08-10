@@ -15,40 +15,40 @@ File::File(): _fd(UNOPEN_FD) {}
 
 File::Status File::err_to_status(int err)
 {
-    File::Status status = File::Status::OP_OK;
+    File::Status status = File::Status::Code::OK;
     switch (err) {
         case 0:
-            status = File::Status::OP_OK;
+            status = File::Status::Code::OK;
             break;
         // Fallthrough intended
         case ENOSPC:
         case EFBIG:
-            status = File::Status::NO_SPACE;
+            status = File::Status::Code::NO_SPACE;
             break;
         case ENOENT:
-            status = File::Status::DOESNT_EXIST;
+            status = File::Status::Code::DOESNT_EXIST;
             break;
         // Fallthrough intended
         case EPERM:
         case EACCES:
-            status = File::Status::NO_PERMISSION;
+            status = File::Status::Code::NO_PERMISSION;
             break;
         case EEXIST:
-            status = File::Status::FILE_EXISTS;
+            status = File::Status::Code::FILE_EXISTS;
             break;
         case EBADF:
-            status = File::Status::NOT_OPENED;
+            status = File::Status::Code::NOT_OPENED;
             break;
         // Fallthrough intended
         case ENOSYS:
         case EOPNOTSUPP:
-            status = File::Status::NOT_SUPPORTED;
+            status = File::Status::Code::NOT_SUPPORTED;
             break;
         case EINVAL:
-            status = File::Status::INVALID_ARGUMENT;
+            status = File::Status::Code::INVALID_ARGUMENT;
             break;
         default:
-            status = File::Status::OTHER_ERROR;
+            status = File::Status::Code::OTHER_ERROR;
             break;
     }
     return status;
@@ -62,7 +62,7 @@ File::Status File::open(const char* path, File::Mode mode, File::OverwriteType o
     ETFW_ASSERT(overwrite >= File::NO_OVERWRITE && overwrite <= File::MAX_OVERWRITE_TYPE,
         "Invalid overwrite type selected");
     int32_t flags = 0;
-    File::Status status = File::OP_OK;
+    File::Status status = File::Status::Code::OK;
 
     switch (mode)
     {
@@ -123,15 +123,15 @@ File::Status File::read(uint8_t* buf, size_t &sz, File::WaitType wait)
     if (_mode == OPEN_NO_MODE)
     {
         sz = 0;
-        return File::NOT_OPENED;
+        return File::Status::Code::NOT_OPENED;
     }
     else if (_mode != OPEN_READ)
     {
         sz = 0;
-        return File::NOT_OPENED;
+        return File::Status::Code::NOT_OPENED;
     }
 
-    Status status = File::OP_OK;
+    Status status = File::Status::Code::OK;
     ssize_t read_size = ::read(_fd, buf, sz);
     if (read_size == ERR_RC)
     {
@@ -144,7 +144,7 @@ File::Status File::read(uint8_t* buf, size_t &sz, File::WaitType wait)
     }
     else
     {
-        status = File::OTHER_ERROR;
+        status = File::Status::Code::OTHER_ERROR;
     }
 
     return status;
@@ -152,7 +152,7 @@ File::Status File::read(uint8_t* buf, size_t &sz, File::WaitType wait)
 
 File::Status File::readline(uint8_t* buf, size_t &sz, File::WaitType wait)
 {
-    return File::Status::NOT_SUPPORTED;
+    return File::Status::Code::NOT_SUPPORTED;
 }
 
 File::Status File::write(uint8_t* buf, size_t &sz, File::WaitType wait)
@@ -164,15 +164,15 @@ File::Status File::write(uint8_t* buf, size_t &sz, File::WaitType wait)
     if (_mode == File::Mode::OPEN_NO_MODE)
     {
         sz = 0;
-        return File::Status::NOT_OPENED;
+        return File::Status::Code::NOT_OPENED;
     }
     else if (_mode == File::Mode::OPEN_READ)
     {
         sz = 0;
-        return File::Status::INVALID_MODE;
+        return File::Status::Code::INVALID_MODE;
     }
 
-    Status status = File::OP_OK;
+    Status status = File::Status::Code::OK;
     ssize_t write_size = ::write(_fd, buf, sz);
     if (write_size == ERR_RC)
     {
@@ -185,7 +185,7 @@ File::Status File::write(uint8_t* buf, size_t &sz, File::WaitType wait)
     }
     else
     {
-        status = File::Status::OTHER_ERROR;
+        status = File::Status::Code::OTHER_ERROR;
     }
 
     return status;
@@ -197,18 +197,18 @@ File::Status File::size(size_t &result)
         "Invalid file mode for size check");
     if (_mode == File::Mode::OPEN_NO_MODE)
     {
-        return File::Status::NOT_OPENED;
+        return File::Status::Code::NOT_OPENED;
     }
 
-    return File::Status::NOT_SUPPORTED;
+    return File::Status::Code::NOT_SUPPORTED;
 }
 
 File::Status File::position(size_t &result)
 {
-    return File::Status::NOT_SUPPORTED;
+    return File::Status::Code::NOT_SUPPORTED;
 }
 
 File::Status File::calc_crc(uint32_t &crc)
 {
-    return File::Status::NOT_SUPPORTED;
+    return File::Status::Code::NOT_SUPPORTED;
 }

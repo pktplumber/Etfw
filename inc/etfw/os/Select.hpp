@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include "OsTypes.hpp"
+#include "etfw/status.hpp"
 
 namespace Os {
     constexpr std::size_t MAX_SELECTABLE_OBJS = 32;
@@ -12,14 +13,26 @@ namespace Os {
         public:
             using FdSet = Os::OsFd_t[MAX_SELECTABLE_OBJS];
 
-            enum Status: int32_t
+            struct StatusTrait
             {
-                OP_OK       = 0,
-                NOT_OPEN    = -1,
-                TIMEOUT     = -2,
-                SET_FULL    = -3,
-                INVALID_FD  = -4
+                enum class Code : int32_t
+                {
+                    OK,
+                    TIMEOUT,
+                    SET_FULL,
+                    INVALID_FD
+                };
+
+                static constexpr StatusStr_t ErrStrLkup[] =
+                {
+                    "Success",
+                    "Timeout",
+                    "Set is full. Cannot add more fds",
+                    "One or more file descriptors is invalid",
+                };
             };
+
+            using Status = EtfwStatus<StatusTrait>;
 
             Select();
             ~Select();

@@ -16,6 +16,39 @@ namespace etfw {
             using ChildRegistry = iSvc::Registry<iSvc, MAX_NUM_CHILD_SVCS>;
             using Status = iSvc::Status;
 
+            class AppFwProxy
+            {
+                public:
+                    AppFwProxy(iApp* app):
+                        app_(app)
+                    {}
+
+                    Status register_child(iSvc& svc)
+                    {
+                        return app_->register_child(svc);
+                    }
+
+                    Status start_child(iSvc& svc)
+                    {
+                        return app_->start_child(svc);
+                    }
+
+                    /// @brief Formats and logs a service message. 
+                    /// @param level Log level
+                    /// @param format String/format to log.
+                    /// @param Args String format arguments
+                    void log(const LogLevel level, const char* format, ...)
+                    {
+                        va_list args;
+                        va_start(args, format);
+                        app_->log(level, format, args);
+                        va_end(args);
+                    }
+
+                private:
+                    iApp* app_;
+            };
+
             /// @brief App interface constructor
             /// @param id Application ID
             /// @param name etl::string type of application name
@@ -48,6 +81,8 @@ namespace etfw {
             /// @brief Sends a command message to all subscribed applications
             /// @param msg Message to send
             static void send_cmd(const etl::imessage& msg);
+
+            friend class AppFwProxy;
 
         protected:
             Status register_child(iSvc& child);

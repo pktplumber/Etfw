@@ -38,49 +38,81 @@ int convert_sock_domain_enum(Sock::AddressDomain domain)
     }
 }
 
+Sock::Sock():
+    fd_(Os::OS_INVALID_FD),
+    sock_type_(DGRAM),
+    domain_(IPv4),
+    is_open_(false),
+    is_bound_(false)
+{}
+
+Sock::Sock(AddressDomain domain):
+    fd_(Os::OS_INVALID_FD),
+    sock_type_(DGRAM),
+    domain_(domain),
+    is_open_(false),
+    is_bound_(false)
+{}
+
+Sock::Sock(Type type):
+    fd_(Os::OS_INVALID_FD),
+    sock_type_(type),
+    domain_(IPv4),
+    is_open_(false),
+    is_bound_(false)
+{}
+
+Sock::Sock(AddressDomain domain, Type type):
+    fd_(Os::OS_INVALID_FD),
+    sock_type_(type),
+    domain_(domain),
+    is_open_(false),
+    is_bound_(false)
+{}
+
 Sock::Status Sock::open() noexcept
 {
     Sock::Status status = OP_OK;
-    Fd = ::socket(convert_sock_domain_enum(Domain),
-        convert_sock_type_enum(SockType), 0);
-    if (Fd == Os::OS_INVALID_FD)
+    fd_ = ::socket(convert_sock_domain_enum(domain_),
+        convert_sock_type_enum(sock_type_), 0);
+    if (fd_ == Os::OS_INVALID_FD)
     {
         status = OPEN_FAILURE;
     }
     else
     {
-        IsOpen = true;
+        is_open_ = true;
     }
     return status;
 }
 
 Sock::Status Sock::close() noexcept
 {
-    if (IsOpen)
+    if (is_open_)
     {
-        ::close(Fd);
-        Fd = Os::OS_INVALID_FD;
+        ::close(fd_);
+        fd_ = Os::OS_INVALID_FD;
     }
-    IsOpen = false;
-    IsBound = false;
+    is_open_ = false;
+    is_bound_ = false;
     return Sock::Status::OP_OK;
 }
 
 Sock::Status Sock::bind(Sock::Address &addr) noexcept
 {
     Sock::Status status = NOT_OPENED;
-    if (IsOpen)
+    if (is_open_)
     {
         sockaddr_in posix_addr = {};
         posix_addr.sin_family = AF_INET;
         posix_addr.sin_port = htons(addr.Port);
         posix_addr.sin_addr.s_addr = inet_addr(addr.Addr);
 
-        int err = ::bind(Fd, (struct sockaddr *)&posix_addr, sizeof(posix_addr));
+        int err = ::bind(fd_, (struct sockaddr *)&posix_addr, sizeof(posix_addr));
         if (err >= 0)
         {
             status = OP_OK;
-            IsBound = true;
+            is_bound_ = true;
         }
         else
         {
@@ -92,17 +124,17 @@ Sock::Status Sock::bind(Sock::Address &addr) noexcept
 
 Sock::Status Sock::receive(uint8_t* &buf, size_t &sz) noexcept
 {
-    if (!IsOpen)
+    if (!is_open_)
     {
         return Sock::Status::NOT_OPENED;
     }
 
-    if (!IsBound)
+    if (!is_bound_)
     {
         return Sock::Status::NOT_BOUND;
     }
 
-    ssize_t bytes_rxd = ::recv(Fd, buf, sz, 0);
+    ssize_t bytes_rxd = ::recv(fd_, buf, sz, 0);
     if (bytes_rxd >= 0)
     {
         sz = static_cast<size_t>(bytes_rxd);
@@ -112,11 +144,16 @@ Sock::Status Sock::receive(uint8_t* &buf, size_t &sz) noexcept
     return Sock::Status::RECV_ERR;
 }
 
-Sock::Status Sock::send(uint8_t* &buf, size_t &sz, Address &address) noexcept
+Sock::Status Sock::send(uint8_t* buf, size_t &sz, Address &address) noexcept
 {
-    if (!IsOpen)
+    if (!is_open_)
     {
         return Sock::Status::NOT_OPENED;
+    }
+
+    if (buf == nullptr)
+    {
+        return Sock::Status::INVALID_ARG;
     }
 
     sockaddr_in dest_addr = {};
@@ -124,7 +161,7 @@ Sock::Status Sock::send(uint8_t* &buf, size_t &sz, Address &address) noexcept
     dest_addr.sin_port = htons(address.Port);
     dest_addr.sin_addr.s_addr = inet_addr(address.Addr);
 
-    ssize_t bytes_tx = ::sendto(Fd, buf, sz, 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
+    ssize_t bytes_tx = ::sendto(fd_, buf, sz, 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
     if (bytes_tx >= 0)
     {
         sz = static_cast<size_t>(bytes_tx);

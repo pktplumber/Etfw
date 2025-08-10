@@ -46,12 +46,12 @@ Select::Status Select::add_fd(Os::OsFd_t fd)
 {
     if (RdSetIdx >= MAX_SELECTABLE_OBJS)
     {
-        return Select::Status::SET_FULL;
+        return Status::Code::SET_FULL;
     }
     RdSet[RdSetIdx] = fd;
     RdSetIdx++;
 
-    return Select::Status::OP_OK;
+    return Status::Code::OK;
 }
 
 Select::Status Select::read_wait(TimeMs_t ms, FdSet &fds, std::size_t &num_fds)
@@ -67,12 +67,12 @@ Select::Status Select::read_wait(TimeMs_t ms, FdSet &fds, std::size_t &num_fds)
     fd_set rd_set;
     FD_ZERO(&rd_set);
     add_set(rd_set, RdSet, RdSetIdx, MaxFd);
-    Select::Status status = TIMEOUT;
+    Select::Status status = Status::Code::TIMEOUT;
     int err = select(MaxFd+1, &rd_set, nullptr, nullptr, &timeout);
     if (err > 0)
     {
         // IO success
-        status = OP_OK;
+        status = Status::Code::OK;
         for (auto &fd: RdSet)
         {
             if (FD_ISSET(fd, &rd_set))
@@ -85,7 +85,7 @@ Select::Status Select::read_wait(TimeMs_t ms, FdSet &fds, std::size_t &num_fds)
     }
     else if (err < 0)
     {
-        status = INVALID_FD;
+        status = Status::Code::INVALID_FD;
     }
     return status;
 }
