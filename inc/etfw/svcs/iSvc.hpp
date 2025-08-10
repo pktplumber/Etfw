@@ -160,6 +160,32 @@ class iSvc
                 SvcContainer_t Svcs;
         };
 
+        /// @brief Svc access proxy. Gives other components access to log methods
+        class AccessProxy
+        {
+            public:
+                /// @brief Access proxy constructor.
+                /// @param svc Parent service
+                AccessProxy(iSvc* svc):
+                    svc_(svc)
+                {}
+
+                /// @brief Formats and logs a service message. 
+                /// @param level Log level
+                /// @param format String/format to log.
+                /// @param Args String format arguments
+                void log(const LogLevel level, const char* format, ...)
+                {
+                    va_list args;
+                    va_start(args, format);
+                    svc_->log(level, format, args);
+                    va_end(args);
+                }
+
+            private:
+                iSvc* svc_;
+        };
+
         /// @brief Initialize the component data + objects. Must be called before start.
         /// @return Svc status
         Status init();
@@ -224,6 +250,7 @@ class iSvc
         virtual iRegistry* children() { return nullptr; }
 
         friend class iSvcRunner;
+        friend class AccessProxy;
 
     protected:
         /// @brief Construct a new Svc object

@@ -63,6 +63,5 @@ namespace etfw
         
         protected:
             Runner_t Runner;
-             
     };
 }
