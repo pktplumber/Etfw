@@ -3,19 +3,34 @@
 
 #include "OsTypes.hpp"
 #include "etfw_assert.hpp"
+#include "status.hpp"
 
 namespace Os {
     class Mutex
     {
         public:
-            enum class Status : int32_t
+
+            struct StatusTrait
             {
-                OK,
-                OS_INIT_ERR,
-                LOCK_FAILURE,
-                TIMEOUT,
-                UNLOCK_FAILURE
+                enum class Code : int32_t
+                {
+                    OK,
+                    OS_INIT_ERR,
+                    LOCK_FAILURE,
+                    TIMEOUT,
+                    UNLOCK_FAILURE
+                };
+
+                static constexpr StatusStr_t ErrStrLkup[] =
+                {
+                    "Success",
+                    "OS initialization error",
+                    "OS Lock failure",
+                    "Unlock failure"
+                };
             };
+
+            using Status = EtfwStatus<StatusTrait>;
 
             Mutex();
 

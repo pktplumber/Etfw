@@ -10,29 +10,29 @@ Mutex::Mutex()
 
 Mutex::Status Mutex::init()
 {
-    Mutex::Status stat = Status::OK;
+    Mutex::Status stat = Status::Code::OK;
     int os_ret = pthread_mutex_init(&mutex_, nullptr);
     if (os_ret != 0)
     {
-        stat = Status::OS_INIT_ERR;
+        stat = Status::Code::OS_INIT_ERR;
     }
     return stat;
 }
 
 Mutex::Status Mutex::lock()
 {
-    Mutex::Status stat = Status::OK;
+    Mutex::Status stat = Status::Code::OK;
     int os_ret = pthread_mutex_lock(&mutex_);
     if (os_ret != 0)
     {
-        stat = Status::LOCK_FAILURE;
+        stat = Status::Code::LOCK_FAILURE;
     }
     return stat;
 }
 
 Mutex::Status Mutex::lock(const TimeMs_t t_ms)
 {
-    Mutex::Status stat = Status::OK;
+    Mutex::Status stat = Status::Code::OK;
 
     timespec ts;
     /// NOTE: This is unsafe in real-time applications. Changing system time could result
@@ -56,11 +56,11 @@ Mutex::Status Mutex::lock(const TimeMs_t t_ms)
     int os_ret = pthread_mutex_timedlock(&mutex_, &ts);
     if (os_ret == ETIMEDOUT)
     {
-        stat = Status::TIMEOUT;
+        stat = Status::Code::TIMEOUT;
     }
     else if (os_ret != 0)
     {
-        stat = Status::LOCK_FAILURE;
+        stat = Status::Code::LOCK_FAILURE;
     }
 
     return stat;
@@ -68,11 +68,11 @@ Mutex::Status Mutex::lock(const TimeMs_t t_ms)
 
 Mutex::Status Mutex::unlock()
 {
-    Mutex::Status stat = Status::OK;
+    Mutex::Status stat = Status::Code::OK;
     int os_ret = pthread_mutex_unlock(&mutex_);
     if (os_ret != 0)
     {
-        stat = Status::UNLOCK_FAILURE;
+        stat = Status::Code::UNLOCK_FAILURE;
     }
     return stat;
 }

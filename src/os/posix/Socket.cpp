@@ -106,7 +106,7 @@ Sock::Status Sock::bind(Sock::Address &addr) noexcept
         sockaddr_in posix_addr = {};
         posix_addr.sin_family = AF_INET;
         posix_addr.sin_port = htons(addr.Port);
-        posix_addr.sin_addr.s_addr = inet_addr(addr.Addr);
+        posix_addr.sin_addr.s_addr = inet_addr(addr.Addr.data());
 
         int err = ::bind(fd_, (struct sockaddr *)&posix_addr, sizeof(posix_addr));
         if (err >= 0)
@@ -159,7 +159,7 @@ Sock::Status Sock::send(uint8_t* buf, size_t &sz, Address &address) noexcept
     sockaddr_in dest_addr = {};
     dest_addr.sin_family = AF_INET;
     dest_addr.sin_port = htons(address.Port);
-    dest_addr.sin_addr.s_addr = inet_addr(address.Addr);
+    dest_addr.sin_addr.s_addr = inet_addr(address.Addr.data());
 
     ssize_t bytes_tx = ::sendto(fd_, buf, sz, 0, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
     if (bytes_tx >= 0)
