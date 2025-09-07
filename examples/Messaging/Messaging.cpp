@@ -14,6 +14,7 @@
 #include "etfw/svcs/App.hpp"
 
 #include "App1/ActiveApp1.hpp"
+#include "App2/App2.hpp"
 
 template <etfw::SvcId_t TAppId>
 using ActiveAppCfg_t = etfw::SvcCfg<TAppId, etfw::ActiveSvcCfg<AppPriority, AppStackSz>>;
@@ -51,6 +52,7 @@ struct ActiveApp3Cfg : public ActiveAppCfg_t<App3Id>
 int main()
 {
     app1::App app1;
+    app2::App app2;
     printf("%s\n", app1.init().str());
     return 0;
 }
