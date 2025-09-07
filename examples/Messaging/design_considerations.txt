@@ -1,0 +1,4 @@
+How might users want to use messaging?
+    - They may want the app object to handle the messages
+    - They may want the a separate object to handle the messages
+    - They may want 

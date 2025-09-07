@@ -8,10 +8,16 @@
 namespace etfw {
 namespace Msg {
 
+    /// @brief Converts a type list of messages to a runtime message container
+    /// @tparam ...TMsgs Message type list
+    /// @return Message container
     template <typename... TMsgs>
     constexpr auto to_msg_id_list() {
         return MsgIdContainer{ TMsgs::ID... };
     }
+
+    /// @brief Router/handler ID type
+    using RouterId_t = etl::message_router_id_t;
 
     /**
      * @brief Generic message handler class.
@@ -30,27 +36,47 @@ namespace Msg {
                 Router<THandler, TMsgLimit, TMsgs...>,
                 TMsgs...>;
 
+            /// @brief Construct a router/pipe for a handler
+            /// @param component Message handler. Must have a static "ID" field.
             Router(THandler& component):
                 Base_t(static_cast<etl::message_id_t>(component.ID)),
                 Handler_(component),
                 IdList(to_msg_id_list<TMsgs...>()),
-                SubbedMsgs(*this, IdList) {}
-            
+                SubbedMsgs(*this, IdList)
+            {}
+
+            /// @brief Construct a router/pipe.
+            /// @param component Message handler.
+            /// @param rtr_id The message handler's ID.
+            Router(THandler& component, RouterId_t rtr_id):
+                Base_t(rtr_id),
+                Handler_(component),
+                IdList(to_msg_id_list<TMsgs...>()),
+                SubbedMsgs(*this, IdList)
+            {}
+
+            /// @brief Get the router's subscribed messages
+            /// @return Message subscription
+            inline Subscription& subscription(void)
+            {
+                return SubbedMsgs;
+            }
+
+            /// @brief Dispatches messages to the corresponding handler function
+            /// @tparam Msg message type
+            /// @param[in] msg Message to process
             template <typename Msg>
             void on_receive(const Msg& msg)
             {
                 Handler_.receive(msg);
             }
 
+            /// @brief Default handler for an unknown message.
+            /// @param[in] msg Message
             void on_receive_unknown(const etl::imessage& msg)
             {
                 printf("[%s]: Got unkown message\n",
                     Handler_.name_raw());
-            }
-
-            inline Subscription& subscription(void)
-            {
-                return SubbedMsgs;
             }
         
         protected:

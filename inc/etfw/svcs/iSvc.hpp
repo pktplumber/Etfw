@@ -54,7 +54,7 @@ class iSvc
             /// @brief Status code string messages
             static constexpr StatusStr_t ErrStrLkup[] =
             {
-                "Operation success",
+                "Success",
                 "Svc ID is taken",
                 "Svc unregistered",
                 "Svc registry full",

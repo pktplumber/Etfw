@@ -12,6 +12,6 @@
 #define ETL_NOEXCEPT
 
 /// Functional config
-#define ETL_MESSAGE_ID_TYPE uint_least16_t
+#define ETL_MESSAGE_ID_TYPE uint_least32_t
 
 #endif

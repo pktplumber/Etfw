@@ -12,6 +12,7 @@ set(ETFW_SVC_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/svcs")
 set(ETFW_OSAL_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/os")
 set(DEFAULT_OSAL_SRC_DIR "${ETFW_OSAL_SRC}/posix")
 set(ETL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/etl")
+set(TEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/test")
 
 # ~~~~~~ Osal option ~~~~~~
 set(OSAL_SRC_DIR "" CACHE PATH "Path to the b-specific source directory to compile")
@@ -23,8 +24,11 @@ if (NOT EXISTS "${OSAL_SRC_DIR}")
 endif()
 message(STATUS "Using OSAL dir : ${OSAL_SRC_DIR}")
 
-# ~~~~~~ Examples option ~~~~~~
+# ~~~~~~ Options ~~~~~~
+option(ENABLE_UNIT_TESTS "Enable building unit tests" OFF)
 option(EXAMPLES "Compile examples" OFF)
+
+# ~~~~~~ Fetch unit test content ~~~~~~
 
 # ~~~~~~ Inc ~~~~~~
 set(PUBLIC_INCLUDE_DIR "${ETFW_INC}")
@@ -67,6 +71,14 @@ target_link_libraries(etfw
 
 # Set C++ standard
 target_compile_features(etfw PUBLIC cxx_std_17)
+
+# Add tests if enabled
+if(ENABLE_UNIT_TESTS)
+    message(STATUS "Adding unit tests")
+    # Add test executable to build
+    enable_testing()
+    add_subdirectory(${TEST_DIR})
+endif()
 
 # Compile examples if included
 if(EXAMPLES)

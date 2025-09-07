@@ -1,0 +1,3 @@
+Summary,Description,Type,Rationale,Exception
+No dynamic memory,ETFW shall not use dynamic memory for it's objects (i.e. heap memory and the new method are not allowed),Constraint,Dynamic memory introduces nondeterministic behavior.,
+No exceptions,ETFW shall not use exceptions.,Constraint,Exceptions often introduce nondeterministic behavior.,3rd party libraries/dependencies may be configured to allow exceptions by the user.
