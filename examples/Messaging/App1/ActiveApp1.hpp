@@ -4,7 +4,7 @@
 #include "Common.hpp"
 #include "Cfg.hpp"
 #include "Msg.hpp"
-#include <etfw/svcs/msg/Router.hpp>
+#include <etfw/msg/Router.hpp>
 
 namespace app1
 {
@@ -55,7 +55,7 @@ namespace app1
             {
                 if (cmd.ExecOk)
                 {
-                    
+
                 }
             }
 

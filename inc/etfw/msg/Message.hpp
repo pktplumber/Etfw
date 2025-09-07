@@ -3,7 +3,7 @@
 
 #include <cstdint>
 #include <etl/message.h>
-#include "../SvcTypes.hpp"
+#include "svcs/SvcTypes.hpp"
 
 #ifndef ETFW_MSG_FUNC_ID_OFFSET
 #define ETFW_MSG_FUNC_ID_OFFSET     0

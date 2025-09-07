@@ -2,7 +2,7 @@
 #pragma once
 
 #include "Cfg.hpp"
-#include <etfw/svcs/msg/Message.hpp>
+#include <etfw/msg/Message.hpp>
 
 namespace app1
 {

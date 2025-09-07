@@ -2,7 +2,7 @@
 #include "etfw/svcs/App.hpp"
 #include "etfw/svcs/SvcCfg.hpp"
 #include "etfw/svcs/AppChild.hpp"
-#include "etfw/svcs/msg/Router.hpp"
+#include "etfw/msg/Router.hpp"
 
 static constexpr etfw::SvcId_t AppId = 1;
 

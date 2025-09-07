@@ -28,5 +28,8 @@ namespace app2
             {
                 return Status::Code::OK;
             }
+
+        private:
+            
     };
 }
