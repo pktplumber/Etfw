@@ -16,6 +16,8 @@
 #include "App1/ActiveApp1.hpp"
 #include "App2/App2.hpp"
 
+#include "MsgScheduler.hpp"
+
 template <etfw::SvcId_t TAppId>
 using ActiveAppCfg_t = etfw::SvcCfg<TAppId, etfw::ActiveSvcCfg<AppPriority, AppStackSz>>;
 
@@ -48,11 +50,26 @@ struct ActiveApp3Cfg : public ActiveAppCfg_t<App3Id>
     static constexpr const char* NAME = "EX_APP_3";
 };
 
+#define APP2_WAKEUP     8   // 800 ms
 
 int main()
 {
     app1::App app1;
     app2::App app2;
-    printf("%s\n", app1.init().str());
+    MsgScheduler msg_scheduler{
+        MsgScheduler::Entry(app2::WakeupMsg::ID, APP2_WAKEUP)
+    };
+
+    printf("App1 init status: %s\n", app1.init().str());
+    printf("App2 init status: %s\n", app2.init().str());
+
+    app1.start();
+    app2.start();
+
+    while (true)
+    {
+        msg_scheduler.run();
+    }
+
     return 0;
 }

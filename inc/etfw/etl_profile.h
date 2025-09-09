@@ -13,5 +13,6 @@
 
 /// Functional config
 #define ETL_MESSAGE_ID_TYPE uint_least32_t
+#define ETL_MESSAGES_ARE_NOT_VIRTUAL
 
 #endif

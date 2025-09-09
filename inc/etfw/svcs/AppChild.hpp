@@ -3,6 +3,20 @@
 
 #include "Runner.hpp"
 
+#include "etl/type_traits.h"
+
+template <typename, typename = etl::void_t<>>
+struct has_init_impl : etl::false_type {};
+
+template <typename T>
+struct has_init_impl<T, etl::void_t<decltype(etl::declval<T>().init_impl())>> : etl::true_type {};
+
+template <typename, typename = etl::void_t<>>
+struct has_cleanup_impl : etl::false_type {};
+
+template <typename T>
+struct has_cleanup_impl<T, etl::void_t<decltype(etl::declval<T>().cleanup_impl())>> : etl::true_type {};
+
 namespace etfw
 {
     class iAppChild : public iSvc
@@ -35,9 +49,21 @@ namespace etfw
                 return static_cast<Derived*>(this)->run_loop();
             }
 
-            Status init_(void) override
+            /// @brief Private initialization method. Calls derived init method
+            /// @todo Investigate if fwd args can be used here
+            /// @return Initialization status
+            Status init_() override
             {
-                return Status::Code::OK;
+                // Call init implementation if implemented in derived class
+                if constexpr (has_init_impl<Derived>::value)
+                {
+                    return static_cast<Derived*>(this)->init_impl();
+                }
+                else
+                {
+                    // Otherwise return OK
+                    return Status::Code::OK;
+                }
             }
 
             Status start_() override
@@ -58,7 +84,14 @@ namespace etfw
 
             Status cleanup_(void) override
             {
-                return Status::Code::OK;
+                if constexpr (has_cleanup_impl<Derived>::value)
+                {
+                    return static_cast<Derived*>(this)->cleanup_impl();
+                }
+                else
+                {
+                    return Status::Code::OK;
+                }
             }
         
         protected:

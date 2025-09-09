@@ -166,7 +166,7 @@ class ExampleApp : public etfw::App<ExampleApp, AppCfg>
         AppChild<Child1Cfg> child1;
         AppChild<Child2Cfg> child2;
 
-        etfw::Msg::Router<ExampleApp, 1, StartChild2Cmd> msg_rtr;
+        etfw::msg::Router<ExampleApp, 1, StartChild2Cmd> msg_rtr;
 };
 
 int main()

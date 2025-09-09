@@ -6,7 +6,7 @@
 #include "BlockingMsgQueue.hpp"
 
 namespace etfw {
-namespace Msg {
+namespace msg {
 
     /// @brief Converts a type list of messages to a runtime message container
     /// @tparam ...TMsgs Message type list
@@ -99,6 +99,12 @@ namespace Msg {
         using Base_t = Router<THandler, TMsgLimit, TMsgs...>;
         using Base_t::accepts;
 
+        enum DequeueStat : uint32_t
+        {
+            OK = 0,
+            TIMEOUT = 1,
+        };
+
         QueuedRouter(THandler& component):
             Base_t(component),
             Enabled(true) {}
@@ -123,6 +129,24 @@ namespace Msg {
                     process_pkt(pkt);
                 }
             }
+        }
+
+        DequeueStat receive_msgs(const uint32_t time_ms)
+        {
+            DequeueStat status = DequeueStat::TIMEOUT;
+            message_packet pkt;
+            if (queue.front(pkt, time_ms))
+            {
+                // Queue not empty return OK
+                status = DequeueStat::OK;
+                process_pkt(pkt);
+                while (queue.front(pkt))
+                {
+                    process_pkt(pkt);
+                }
+            }
+
+            return status;
         }
 
         inline void enable(void) { Enabled = true; }

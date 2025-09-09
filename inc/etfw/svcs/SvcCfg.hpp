@@ -36,7 +36,7 @@ namespace etfw {
         using Runner_t = etfw::PassiveRunner;
 
         template <typename TConcreteSvc, typename... TMsgs>
-        using MsgHandler_t = etfw::Msg::Router<TConcreteSvc, 0, TMsgs...>;
+        using MsgHandler_t = etfw::msg::Router<TConcreteSvc, 0, TMsgs...>;
 
         template <typename TConcreteSvc, typename... TMsgs>
         using CmdHandler_t = MsgHandler_t<TConcreteSvc, TMsgs...>;

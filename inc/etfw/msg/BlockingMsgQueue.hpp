@@ -6,7 +6,7 @@
 #include "etfw_assert.hpp"
 
 namespace etfw {
-namespace Msg {
+namespace msg {
 
 template <typename T, size_t QDepth>
 class BlockingMsgQueue

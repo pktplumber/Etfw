@@ -6,6 +6,12 @@
 
 namespace app2
 {
+    // ~~~~~~~~~~ App 2 wakeup message ~~~~~~~~~
+    using WakeupMsg = etfw::msg::wakeup<AppId>;
+
+
+    // ~~~~~~~~~~ App 2 commands ~~~~~~~~~
+
     /// @brief Makes App 2 say hello
     struct SayHello : public etfw::msg::command<AppId, 0>
     {};
@@ -25,6 +31,8 @@ namespace app2
     struct StopSendingSpecialMsg : public etfw::msg::command<AppId, 2>
     {};
 
+
+    // ~~~~~~~~~~ App 2 status messages ~~~~~~~~~
 
     /// @brief Periodic stats message
     struct StatsMsg : public etfw::msg::telemetry<AppId, 0>

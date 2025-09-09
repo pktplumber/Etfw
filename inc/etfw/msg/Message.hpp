@@ -96,12 +96,25 @@ namespace etfw {
 
         // ~~~~~~~~~~~~~~~~~ Message Class Types ~~~~~~~~~~~~~~~~~
 
+        struct iBaseMsg : public etl::imessage
+        {
+            iBaseMsg(MsgId_t id):
+                etl::imessage(id)
+            {}
+        };
+
         /// @brief ETFW message base
         /// @tparam TModId ID of the message's owner module
         /// @tparam TFuncId Message function ID
         template <MsgModuleId_t TModId, MsgType_t VMsgType, FuncId_t TFuncId>
         struct BaseMsg : public etl::message<
             to_msg_id<TModId, VMsgType, TFuncId>()>
+        {};
+
+        /// @brief Wakeup message type
+        /// @tparam TModId Module/user of wakeup message
+        template <MsgModuleId_t TModId>
+        struct wakeup : public BaseMsg<TModId, WAKEUP, 0>
         {};
 
         /// @brief Command message base type

@@ -8,7 +8,7 @@
 #endif
 
 namespace etfw {
-namespace Msg {
+namespace msg {
 
 /// @brief Message type identifier
 using MsgId = etl::message_id_t;

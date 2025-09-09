@@ -7,9 +7,9 @@ using namespace etfw;
 
 using Status = iApp::Status;
 
-Msg::Broker iApp::CmdBroker;
-Msg::Broker iApp::StatusBroker;
-Msg::Broker iApp::WakeupBroker;
+msg::Broker iApp::CmdBroker;
+msg::Broker iApp::StatusBroker;
+msg::Broker iApp::WakeupBroker;
 
 Status iApp::register_child(iSvc& child)
 {
@@ -58,40 +58,72 @@ void iApp::send_cmd(const etl::imessage& msg)
     CmdBroker.receive(msg);
 }
 
-void iApp::subscribe_cmd(Msg::Subscription &msgs)
+void iApp::subscribe_cmd(msg::Subscription &msgs)
 {
     CmdBroker.subscribe(msgs);
 }
 
 void iApp::subscribe_cmd(etl::imessage_router& handler,
-    std::initializer_list<Msg::MsgId> msg_ids)
+    std::initializer_list<msg::MsgId> msg_ids)
 {
-    Msg::Subscription subscription(handler, msg_ids);
+    msg::Subscription subscription(handler, msg_ids);
     subscribe_cmd(subscription);
 }
 
 void iApp::subscribe_cmd(etl::imessage_router& handler,
-    Msg::MsgIdContainer &msg_ids)
+    msg::MsgIdContainer &msg_ids)
 {
-    Msg::Subscription subscription(handler, msg_ids);
+    msg::Subscription subscription(handler, msg_ids);
     subscribe_cmd(subscription);
 }
 
-void iApp::subscribe_status(Msg::Subscription &msgs)
+void iApp::subscribe_status(msg::Subscription &msgs)
 {
     StatusBroker.subscribe(msgs);
 }
 
 void iApp::subscribe_status(etl::imessage_router& handler,
-    std::initializer_list<Msg::MsgId> msg_ids)
+    std::initializer_list<msg::MsgId> msg_ids)
 {
-    Msg::Subscription subscription(handler, msg_ids);
+    msg::Subscription subscription(handler, msg_ids);
     subscribe_status(subscription);
 }
 
 void iApp::subscribe_status(etl::imessage_router& handler,
-    Msg::MsgIdContainer &msg_ids)
+    msg::MsgIdContainer &msg_ids)
 {
-    Msg::Subscription subscription(handler, msg_ids);
+    msg::Subscription subscription(handler, msg_ids);
     subscribe_status(subscription);
+}
+
+
+// ~~~~~~~~ AppFwProxy method definitions ~~~~~~~~
+
+iApp::AppFwProxy::AppFwProxy(iApp& app):
+    app_(app)
+{}
+
+iApp::AppFwProxy::AppFwProxy(iApp* app):
+    app_(*app)
+{
+    ETFW_ASSERT(app != nullptr,
+        "Attempt to construct app proxy with nullptr");
+}
+
+Status iApp::AppFwProxy::register_child(iSvc& svc)
+{
+    return app_.register_child(svc);
+}
+
+Status iApp::AppFwProxy::start_child(iSvc& svc)
+{
+    return app_.start_child(svc);
+}
+
+void iApp::AppFwProxy::log(const LogLevel level, const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    app_.log(level, format, args);
+    va_end(args);
 }

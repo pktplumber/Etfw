@@ -27,11 +27,14 @@ namespace app1
 
             Status app_init()
             {
+                subscribe_cmd(cmd_pipe.subscription());
                 return Status::Code::OK;
             }
 
             RunState run_loop()
             {
+                cmd_pipe.process_msg_queue(1000);
+                log(etfw::LogLevel::INFO, "Processed command queue");
                 return RunState::OK;
             }
 
@@ -61,7 +64,7 @@ namespace app1
 
         private:
             msg::Stats stats_;
-            etfw::Msg::QueuedRouter<App, CmdPipeDepth,
+            etfw::msg::QueuedRouter<App, CmdPipeDepth,
                 msg::SayHello,
                 msg::PrintThisString,
                 msg::ReturnResponse> cmd_pipe;
