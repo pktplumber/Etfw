@@ -58,6 +58,11 @@ void iApp::send_cmd(const etl::imessage& msg)
     CmdBroker.receive(msg);
 }
 
+void iApp::subscribe_msg(msg::Subscription& subscription)
+{
+    CmdBroker.subscribe(subscription);
+}
+
 void iApp::subscribe_cmd(msg::Subscription &msgs)
 {
     CmdBroker.subscribe(msgs);
@@ -118,6 +123,11 @@ Status iApp::AppFwProxy::register_child(iSvc& svc)
 Status iApp::AppFwProxy::start_child(iSvc& svc)
 {
     return app_.start_child(svc);
+}
+
+void iApp::AppFwProxy::subscribe(msg::Subscription& subscription)
+{
+    iApp::subscribe_msg(subscription);
 }
 
 void iApp::AppFwProxy::log(const LogLevel level, const char* format, ...)

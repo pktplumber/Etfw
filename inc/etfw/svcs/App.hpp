@@ -39,6 +39,8 @@ namespace etfw
             /// @return Start status
             Status start_child(iSvc& svc);
 
+            void subscribe(msg::Subscription& subscription);
+
             /// @brief Formats and logs a service message. 
             /// @param level Log level
             /// @param format String/format to log.
@@ -94,6 +96,8 @@ namespace etfw
         Status start_child(iSvc& child);
 
         Status unregister_all_children();
+
+        static void subscribe_msg(msg::Subscription& subscription);
 
         /// @brief Subscribes a message router to a set of commands
         /// @param msgs Subscription class containing the router and commands

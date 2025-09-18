@@ -1,0 +1,2 @@
+The StatsMon app is responsible for receiving application stats message
+and 

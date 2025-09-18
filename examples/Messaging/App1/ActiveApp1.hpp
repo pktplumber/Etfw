@@ -5,6 +5,7 @@
 #include "Cfg.hpp"
 #include "Msg.hpp"
 #include <etfw/msg/Router.hpp>
+#include <etfw/msg/TlmReqHandler.hpp>
 
 namespace app1
 {
@@ -19,6 +20,8 @@ namespace app1
             using Base_t = etfw::App<App, Cfg>;
             using Status = Base_t::Status;
             using RunState = Base_t::RunState;
+            using TlmHandler_t = etfw::msg::TlmReqHandler<AppId,
+                msg::Stats, msg::OtherStats>;
 
             App():
                 Base_t(),
@@ -35,6 +38,7 @@ namespace app1
             {
                 cmd_pipe.process_msg_queue(1000);
                 log(etfw::LogLevel::INFO, "Processed command queue");
+                //tlm_.get()
                 return RunState::OK;
             }
 
@@ -68,5 +72,6 @@ namespace app1
                 msg::SayHello,
                 msg::PrintThisString,
                 msg::ReturnResponse> cmd_pipe;
+            TlmHandler_t tlm_;
     };
 }
