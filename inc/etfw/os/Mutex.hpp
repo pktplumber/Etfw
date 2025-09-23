@@ -8,43 +8,58 @@
 namespace Os {
     class Mutex
     {
-        public:
+    public:
 
-            struct StatusTrait
+        /// @brief Mutex return code trait
+        struct StatusTrait
+        {
+            /// @brief Return codes
+            enum class Code : int32_t
             {
-                enum class Code : int32_t
-                {
-                    OK,
-                    OS_INIT_ERR,
-                    LOCK_FAILURE,
-                    TIMEOUT,
-                    UNLOCK_FAILURE
-                };
-
-                static constexpr StatusStr_t ErrStrLkup[] =
-                {
-                    "Success",
-                    "OS initialization error",
-                    "OS Lock failure",
-                    "Unlock failure"
-                };
+                OK,
+                OS_INIT_ERR,
+                LOCK_FAILURE,
+                TIMEOUT,
+                UNLOCK_FAILURE
             };
 
-            using Status = EtfwStatus<StatusTrait>;
+            /// @brief Return code string representation
+            static constexpr StatusStr_t ErrStrLkup[] =
+            {
+                "Success",
+                "OS initialization error",
+                "OS Lock failure",
+                "Unlock failure"
+            };
+        };
 
-            Mutex();
+        /// @brief Return code type
+        using Status = EtfwStatus<StatusTrait>;
 
-            Status init();
+        Mutex();
 
-            Status lock();
+        /// @brief Initialize the mutex. Must be called before use.
+        /// @return Initialization status
+        Status init();
 
-            Status lock(const TimeMs_t t_ms);
+        /// @brief Lock the mutex.
+        /// @return Lock status
+        Status lock();
 
-            Status unlock();
+        /// @brief Lock the mutex. If already locked, wait for t_ms.
+        /// @param t_ms Milliseconds to wait for lock until timeout.
+        /// @return Lock status
+        Status lock(const TimeMs_t t_ms);
 
-            Status destroy();
+        /// @brief Unlock the mutex
+        /// @return Unlock status
+        Status unlock();
 
-        private:
-            MutexHandle_t mutex_;
+        /// @brief Destroy or "de-init" the mutex. Returns resources to OS.
+        /// @return Destroy status
+        Status destroy();
+
+    private:
+        MutexHandle_t mutex_;
     };
 }

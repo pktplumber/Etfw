@@ -2,11 +2,162 @@
 #pragma once
 
 #include "Message.hpp"
+#include <etl/reference_counted_object.h>
+#include <etl/reference_counted_message.h>
 
 namespace etfw::msg
 {
-    class iPkt
+    struct iPkt
     {
-        
+        MsgId_t MsgId;
+        size_t BufSz;
+    };
+
+    class RefCount : public etl::reference_counter<std::atomic_int32_t>
+    {
+    public:
+        using Base_t = etl::reference_counter<std::atomic_int32_t>;
+
+        RefCount():
+            Base_t()
+        {}
+
+        RefCount(int32_t init_val):
+            Base_t()
+        {
+            set_reference_count(init_val);
+        }
+    };
+
+    class MsgBufPool;
+
+    class MsgBuf : public etl::ireference_counted_message
+    {
+    public:
+        using RefCount_t = RefCount;
+
+        etl::imessage& get_message() override
+        {
+            return *reinterpret_cast<etl::imessage*>(data_buf());
+        }
+
+        const etl::imessage& get_message() const override
+        {
+            return *reinterpret_cast<const etl::imessage*>(data_buf());
+        }
+
+        template <typename MsgT>
+        MsgT& get_message_type()
+        {
+            return *static_cast<MsgT*>(buf());
+        }
+
+        template <typename MsgT>
+        const MsgT& get_message_type() const
+        {
+            return *static_cast<MsgT*>(buf());
+        }
+
+        etl::ireference_counter& get_reference_counter() override
+        {
+            return ref_count_;
+        }
+
+        const etl::ireference_counter& get_reference_counter() const override
+        {
+            return ref_count_;
+        }
+
+        void release() override;
+
+        uint8_t* data_buf();
+
+        const uint8_t* data_buf() const
+        {
+            return reinterpret_cast<const uint8_t*>(this+1);
+        }
+
+        void* buf()
+        {
+            return (this+1);
+        }
+
+        const void* buf() const
+        {
+            return (this+1);
+        }
+
+        size_t buf_size();
+
+        friend class MsgBufPool;
+
+    private:
+        MsgBuf(MsgBufPool& owner, size_t buf_sz);
+
+        template <typename TMsg, typename... TArgs>
+        MsgBuf(MsgBufPool& owner, TArgs&&... args):
+            owner_(owner),
+            ref_count_(1),
+            msg_sz_(sizeof(TMsg))
+        {
+            // Construct at allocated buffer. Assumes buf has been allocated by pool
+            new(buf()) TMsg(etl::forward<TArgs>(args)...);
+            printf("Called constructor 1\n");
+        }
+
+        template <typename TMsg>
+        MsgBuf(const TMsg& msg, MsgBufPool& owner):
+            owner_(owner),
+            ref_count_(1),
+            msg_sz_(sizeof(TMsg))
+        {
+            // Construct at allocated buffer. Assumes buf has been allocated by pool
+            new(buf()) TMsg();
+            printf("Called constructor 2\n");
+        }
+
+        MsgBufPool& owner_;
+        RefCount_t ref_count_;
+        const size_t msg_sz_;
+    };
+
+    class Pool;
+
+    class pkt
+    {
+    public:
+        using RefCount_t = etl::reference_counter<std::atomic_int32_t>;
+    
+        inline RefCount_t& ref_count()
+        {
+            return ref_count_;
+        }
+
+        void release();
+
+        uint8_t* data_buf();
+
+        template <typename T>
+        T* data();
+
+        template<typename T>
+        T* as_p()
+        {
+            return reinterpret_cast<T*>(data_buf());
+        }
+
+        inline size_t size() const { return msg_sz_; }
+
+        MsgId_t message_id();
+
+        friend class Pool;
+
+    private:
+        pkt(Pool& pool, size_t sz);
+        pkt(Pool& pool, size_t sz, int32_t refs);
+
+        Pool& owner_;
+        RefCount_t ref_count_;
+        const size_t msg_sz_;
     };
 }

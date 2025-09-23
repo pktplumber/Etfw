@@ -2,6 +2,8 @@
 #pragma once
 
 #include <etl/message_broker.h>
+#include "Message.hpp"
+#include "Pool.hpp"
 
 #ifndef MSG_MAX_NUM_SUBSCRIPTIONS
 #define MSG_MAX_NUM_SUBSCRIPTIONS   64
@@ -101,8 +103,46 @@ namespace etfw::msg {
     };
 
     /// @brief Message broker class
-    using Broker = etl::message_broker;
+    //using Broker = etl::message_broker;
 
+    class SharedMsg : public etl::shared_message
+    {
+    public:
+        using Base_t = etl::shared_message;
+        using Base_t::Base_t;
+
+        template <typename TPool>
+        static SharedMsg create_from_size(TPool& owner, size_t size)
+        {
+            etl::ireference_counted_message* p_msg = owner.allocate_raw(size);
+
+            if (p_msg != nullptr)
+            {
+                p_msg->get_reference_counter().set_reference_count(1U);
+            }
+
+            return SharedMsg(*p_msg);
+        }
+    };
+
+    class Broker : public etl::message_broker
+    {
+    public:
+        void send(const iMsg& msg, const size_t msg_sz)
+        {
+            
+        }
+
+        template <typename TMsg>
+        void send(const TMsg& msg)
+        {
+            static_assert(etl::is_base_of<iMsg, TMsg>::value,
+                "Message type must derive from etfw::msg::imsg");
+            send(msg, sizeof(TMsg));
+        }
+    private:
+        Pool msg_pool_;
+    };
 
 
     class iSubscription

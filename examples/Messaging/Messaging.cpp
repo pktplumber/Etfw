@@ -12,12 +12,15 @@
  */
 
 #include "etfw/svcs/App.hpp"
+#include <etfw/msg/Pipe.hpp>
 
 #include "App1/ActiveApp1.hpp"
 #include "App2/App2.hpp"
 #include "StatsMon/App.hpp"
 
 #include "MsgScheduler.hpp"
+
+#include <etfw/msg/Pool.hpp>
 
 template <etfw::SvcId_t TAppId>
 using ActiveAppCfg_t = etfw::SvcCfg<TAppId, etfw::ActiveSvcCfg<AppPriority, AppStackSz>>;
@@ -42,6 +45,9 @@ stats_mon::MsgTbl StatsMonMsgTbl{
 #define STATS_MON_WAKEUP    2    // 200 ms
 
 #define APP1_GEN_STATS_PERIOD   20
+
+etl::fixed_sized_memory_block_allocator<200, 4, 20> alloc_;
+etfw::msg::Pool pool_;
 
 int main()
 {

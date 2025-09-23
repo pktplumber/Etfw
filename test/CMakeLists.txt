@@ -17,6 +17,7 @@ add_executable(etfw_tests ${TEST_SOURCES})
 target_link_libraries(
     etfw_tests
     GTest::gtest_main
+    etfw
 )
 
 include(GoogleTest)

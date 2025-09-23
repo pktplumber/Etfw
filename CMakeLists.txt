@@ -60,7 +60,7 @@ add_library(svcs_impl STATIC ${FW_SRCS})
 target_include_directories(svcs_impl PUBLIC "${PUBLIC_INCLUDE_DIR}/etfw")
 target_compile_features(svcs_impl PUBLIC cxx_std_17)
 
-add_library(msg_impl STATIC ${FW_SRCS})
+add_library(msg_impl STATIC ${MSG_SRCS})
 target_include_directories(msg_impl PUBLIC "${PUBLIC_INCLUDE_DIR}/etfw")
 target_compile_features(msg_impl PUBLIC cxx_std_17)
 

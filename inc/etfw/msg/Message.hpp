@@ -127,6 +127,20 @@ namespace etfw::msg
         iBaseMsg(MsgId_t id):
             etl::imessage(id)
         {}
+
+        iBaseMsg():
+            etl::imessage(0)
+        {}
+    };
+
+    struct iMsg : public etl::imessage
+    {
+        size_t Size;
+
+        iMsg(MsgId_t id, size_t sz):
+            etl::imessage(id),
+            Size(sz)
+        {}
     };
 
     /// @brief ETFW message base
