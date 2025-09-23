@@ -4,25 +4,23 @@
 
 using namespace etfw::msg;
 
-MsgBuf::MsgBuf(MsgBufPool& owner, size_t buf_sz):
+Buf::Buf(MsgBufPool& owner, size_t buf_sz):
     owner_(owner),
     ref_count_(1),
     msg_sz_(buf_sz)
-{
-    printf("Called simple constructor %d\n", buf_sz);
-}
+{}
 
-void MsgBuf::release()
+void Buf::release()
 {
     owner_.release(*this);
 }
 
-uint8_t* MsgBuf::data_buf()
+uint8_t* Buf::data_buf()
 {
     return reinterpret_cast<uint8_t*>(this+1);
 }
 
-size_t MsgBuf::buf_size()
+size_t Buf::buf_size()
 {
     return msg_sz_;
 }

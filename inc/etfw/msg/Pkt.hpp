@@ -31,31 +31,31 @@ namespace etfw::msg
 
     class MsgBufPool;
 
-    class MsgBuf : public etl::ireference_counted_message
+    class Buf : public etl::ireference_counted_message
     {
     public:
         using RefCount_t = RefCount;
 
         etl::imessage& get_message() override
         {
-            return *reinterpret_cast<etl::imessage*>(data_buf());
+            return *static_cast<etl::imessage*>(data());
         }
 
         const etl::imessage& get_message() const override
         {
-            return *reinterpret_cast<const etl::imessage*>(data_buf());
+            return *static_cast<const etl::imessage*>(data());
         }
 
         template <typename MsgT>
         MsgT& get_message_type()
         {
-            return *static_cast<MsgT*>(buf());
+            return *static_cast<MsgT*>(data());
         }
 
         template <typename MsgT>
         const MsgT& get_message_type() const
         {
-            return *static_cast<MsgT*>(buf());
+            return *static_cast<MsgT*>(data());
         }
 
         etl::ireference_counter& get_reference_counter() override
@@ -77,12 +77,12 @@ namespace etfw::msg
             return reinterpret_cast<const uint8_t*>(this+1);
         }
 
-        void* buf()
+        void* data()
         {
             return (this+1);
         }
 
-        const void* buf() const
+        const void* data() const
         {
             return (this+1);
         }
@@ -92,28 +92,26 @@ namespace etfw::msg
         friend class MsgBufPool;
 
     private:
-        MsgBuf(MsgBufPool& owner, size_t buf_sz);
+        Buf(MsgBufPool& owner, size_t buf_sz);
 
         template <typename TMsg, typename... TArgs>
-        MsgBuf(MsgBufPool& owner, TArgs&&... args):
+        Buf(MsgBufPool& owner, TArgs&&... args):
             owner_(owner),
             ref_count_(1),
             msg_sz_(sizeof(TMsg))
         {
             // Construct at allocated buffer. Assumes buf has been allocated by pool
-            new(buf()) TMsg(etl::forward<TArgs>(args)...);
-            printf("Called constructor 1\n");
+            new(data()) TMsg(etl::forward<TArgs>(args)...);
         }
 
         template <typename TMsg>
-        MsgBuf(const TMsg& msg, MsgBufPool& owner):
+        Buf(const TMsg& msg, MsgBufPool& owner):
             owner_(owner),
             ref_count_(1),
             msg_sz_(sizeof(TMsg))
         {
             // Construct at allocated buffer. Assumes buf has been allocated by pool
-            new(buf()) TMsg();
-            printf("Called constructor 2\n");
+            new(data()) TMsg();
         }
 
         MsgBufPool& owner_;

@@ -13,13 +13,13 @@ TEST(MsgBuf, AllocateRawSize)
     EXPECT_EQ(pool.stats().items_avail(), 10);
     EXPECT_EQ(pool.stats().WaterMark, 0);
 
-    etfw::msg::MsgBuf* buf1 = pool.allocate(static_cast<size_t>(200));
+    etfw::msg::Buf* buf1 = pool.allocate(static_cast<size_t>(200));
     ASSERT_NE(buf1, nullptr);
     EXPECT_EQ(buf1->buf_size(), 200);
     EXPECT_EQ(pool.stats().items_avail(), 9);
     EXPECT_EQ(pool.stats().WaterMark, 1);
 
-    etfw::msg::MsgBuf* buf2 = pool.allocate(static_cast<size_t>(64));
+    etfw::msg::Buf* buf2 = pool.allocate(static_cast<size_t>(64));
     ASSERT_NE(buf2, nullptr);
     EXPECT_EQ(buf2->buf_size(), 64);
     EXPECT_EQ(pool.stats().items_avail(), 8);
@@ -57,9 +57,27 @@ TEST(MsgBuf, AllocateFromMsg)
         {}
     };
 
+    struct M3 : public etfw::msg::iBaseMsg
+    {
+        bool Flag;
+        uint8_t Data[20];
+        size_t NumBytes;
+
+        M3():
+            etfw::msg::iBaseMsg(2),
+            Flag(false),
+            NumBytes(0)
+        {}
+
+        M3(int val):
+            etfw::msg::iBaseMsg(2),
+            Flag(val)
+        {}
+    };
+
     Pool pool(10);
 
-    etfw::msg::MsgBuf* buf = pool.allocate<M1>();
+    etfw::msg::Buf* buf = pool.allocate<M1>();
     ASSERT_NE(buf, nullptr);
     EXPECT_EQ(buf->buf_size(), sizeof(M1));
     EXPECT_EQ(buf->get_message().get_message_id(), 1);

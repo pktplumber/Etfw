@@ -19,7 +19,7 @@ namespace etfw::msg
     class MsgBufPool : public etl::ireference_counted_message_pool
     {
     public:
-        using Buf_t = MsgBuf;
+        using Buf_t = Buf;
 
         struct Stats
         {
@@ -62,76 +62,74 @@ namespace etfw::msg
         }
 
         template <typename TMsg, typename... TArgs>
-        MsgBuf* allocate(TArgs&&... args)
+        Buf* allocate(TArgs&&... args)
         {
-            MsgBuf* ret = nullptr;
-            const size_t total_sz = sizeof(MsgBuf)+sizeof(TMsg);
+            Buf* ret = nullptr;
+            const size_t total_sz = sizeof(Buf)+sizeof(TMsg);
 
             lock();
-            ret = static_cast<MsgBuf*>(allocate_raw(total_sz, etl::alignment_of<MsgBuf>::value));
+            ret = static_cast<Buf*>(allocate_raw(total_sz, etl::alignment_of<Buf>::value));
             unlock();
 
             if (ret != nullptr)
             {
-                new(ret) MsgBuf(*this, sizeof(TMsg));
-                new(ret->buf()) TMsg(etl::forward<TArgs>(args)...);
+                new(ret) Buf(*this, sizeof(TMsg));
+                new(ret->data()) TMsg(etl::forward<TArgs>(args)...);
             }
 
             return ret;
         }
 
         template <typename TMsg>
-        MsgBuf* allocate(const TMsg& msg)
+        Buf* allocate(const TMsg& msg)
         {
-            MsgBuf* ret = nullptr;
-            const size_t total_sz = sizeof(MsgBuf)+sizeof(TMsg);
+            Buf* ret = nullptr;
+            const size_t total_sz = sizeof(Buf)+sizeof(TMsg);
 
             lock();
-            ret = static_cast<MsgBuf*>(allocate_raw(total_sz, etl::alignment_of<MsgBuf>::value));
+            ret = static_cast<Buf*>(allocate_raw(total_sz, etl::alignment_of<Buf>::value));
             unlock();
 
             if (ret != nullptr)
             {
-                printf("Here 3\n");
-                new(ret) MsgBuf(msg, *this);
+                new(ret) Buf(msg, *this);
             }
 
             return ret;
         }
 
         template <typename TMsg>
-        MsgBuf* allocate()
+        Buf* allocate()
         {
-            MsgBuf* ret = nullptr;
-            const size_t total_sz = sizeof(MsgBuf)+sizeof(TMsg);
+            Buf* ret = nullptr;
+            const size_t total_sz = sizeof(Buf)+sizeof(TMsg);
 
             lock();
-            ret = static_cast<MsgBuf*>(allocate_raw(total_sz, etl::alignment_of<TMsg>::value));
+            ret = static_cast<Buf*>(allocate_raw(total_sz, etl::alignment_of<TMsg>::value));
             unlock();
 
             if (ret != nullptr)
             {
-                new(ret) MsgBuf(*this, sizeof(TMsg));
+                new(ret) Buf(*this, sizeof(TMsg));
                 // Construct message into buffer
-                new(ret->buf()) TMsg();
+                new(ret->data()) TMsg();
             }
 
             return ret;
         }
 
-        MsgBuf* allocate(const size_t sz)
+        Buf* allocate(const size_t sz)
         {
-            MsgBuf* ret = nullptr;
-            const size_t total_sz = sizeof(MsgBuf) + sz;
+            Buf* ret = nullptr;
+            const size_t total_sz = sizeof(Buf) + sz;
 
             lock();
-            ret = static_cast<MsgBuf*>(allocate_raw(total_sz, etl::alignment_of<void*>::value));
+            ret = static_cast<Buf*>(allocate_raw(total_sz, etl::alignment_of<void*>::value));
             unlock();
 
             if (ret != nullptr)
             {
-                printf("Here\n");
-                new(ret) MsgBuf(*this, sz);
+                new(ret) Buf(*this, sz);
             }
 
             return ret;
