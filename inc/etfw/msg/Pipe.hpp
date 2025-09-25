@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "MsgBroker.hpp"
+#include "Subscription.hpp"
 #include "BlockingMsgQueue.hpp"
 #include "Pkt.hpp"
 #include <etl/message_router.h>
@@ -13,7 +13,7 @@ namespace etfw::msg
     {
     public:
         using Base_t = etl::imessage_router;
-        using Subscription_t = Subscription;
+        using Subscription_t = subscription;
         using PipeId_t = etl::message_router_id_t;
         static constexpr PipeId_t DefaultPipeId = 0;
 
@@ -50,11 +50,11 @@ namespace etfw::msg
 
         /// @brief Get the message subscription
         /// @return Const reference to the subscription
-        inline const Subscription_t& subscription() const { return subbed_msgs_; }
+        inline const Subscription_t& subs() const { return subbed_msgs_; }
 
         /// @brief Get the message subscription
         /// @return Reference to the message subscription
-        inline Subscription_t& subscription() { return subbed_msgs_; }
+        inline Subscription_t& subs() { return subbed_msgs_; }
 
     protected:
         /// @brief Default constructor. Builds empty message subscription
@@ -75,10 +75,22 @@ namespace etfw::msg
         /// @param msg_ids Message IDs to subscribe to
         iPipe(
             PipeId_t id,
-            std::initializer_list<MsgId> msg_ids
+            std::initializer_list<MsgId_t> msg_ids
         ):
             Base_t(id),
             subbed_msgs_(*this, msg_ids)
+        {}
+
+        template <typename... TMsgs>
+        iPipe():
+            Base_t(DefaultPipeId),
+            subbed_msgs_(*this, TMsgs{}...)
+        {}
+
+        template <typename... TMsgs>
+        iPipe(PipeId_t id):
+            Base_t(id),
+            subbed_msgs_(*this, TMsgs{}...)
         {}
 
         /// @brief Subscribed messages
@@ -104,7 +116,7 @@ namespace etfw::msg
         /// @brief Handles a message sent to this pipe. 
         /// @details Overrides etl::imessage_router (base of iPipe) 
         ///          "receive" pure virtual method.
-        /// @param msg 
+        /// @param[in] msg Msg to handle
         virtual void receive(const etl::imessage& msg) override
         {
             handler_.handle(msg);

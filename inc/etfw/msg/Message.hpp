@@ -46,6 +46,8 @@ namespace etfw::msg
     /// @brief Used to route messages to an individual node.
     using MsgId_t = uint32_t;
 
+    constexpr MsgId_t MsgIdRsvd = 0;
+
     /// @brief Message type IDs
     enum MsgType_t : uint8_t
     {

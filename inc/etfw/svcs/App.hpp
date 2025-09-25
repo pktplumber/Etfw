@@ -3,7 +3,7 @@
 
 #include "iSvc.hpp"
 #include "SvcRegistry.hpp"
-#include "msg/MsgBroker.hpp"
+#include "msg/Broker.hpp"
 #include "Runner.hpp"
 #include "SvcCfg.hpp"
 

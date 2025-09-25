@@ -32,6 +32,16 @@ class BlockingMsgQueue
             return false;
         }
 
+        bool push(T& item)
+        {
+            if (_queue.push(item))
+            {
+                Sem.give();
+                return true;
+            }
+            return false;
+        }
+
         bool front(T& value)
         {
             if (Sem.take() == Os::CountSem::Status::OP_OK)
@@ -55,6 +65,8 @@ class BlockingMsgQueue
             }
             return false;
         }
+
+        inline bool full() const { return _queue.full(); }
 
     private:
         Os::CountSem Sem;

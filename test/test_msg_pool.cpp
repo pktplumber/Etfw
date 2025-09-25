@@ -1,198 +1,165 @@
 
 #include "ut_framework.hpp"
+
 #include <etfw/msg/Pool.hpp>
-#include <etfw/msg/BlockingMsgQueue.hpp>
-#include <vector>
+#include <etfw/msg/Broker.hpp>
 
-
-struct Msg1 : public etl::imessage
+namespace
 {
-    Msg1():
-        etl::imessage(1)
-    {}
-};
 
-struct Msg2 : public etl::imessage
+using Pool = etfw::msg::MsgBufPool;
+
+TEST(MsgBuf, AllocateRawSize)
 {
-    int OtherData;
+    Pool pool(10);
 
-    Msg2(int other):
-        etl::imessage(2),
-        OtherData(other)
-    {}
-};
+    EXPECT_EQ(pool.stats().items_avail(), 10);
+    EXPECT_EQ(pool.stats().WaterMark, 0);
 
-struct Msg3 : public etl::imessage
-{
-    bool Flag;
-    int OtherData;
-    uint16_t Val;
+    etfw::msg::Buf* buf1 = pool.allocate(static_cast<size_t>(200));
+    ASSERT_NE(buf1, nullptr);
+    EXPECT_EQ(buf1->buf_size(), 200);
+    EXPECT_EQ(pool.stats().items_avail(), 9);
+    EXPECT_EQ(pool.stats().WaterMark, 1);
 
-    Msg3(bool flag, int other, uint16_t val):
-        etl::imessage(3),
-        Flag(flag),
-        OtherData(other),
-        Val(val)
-    {}
-
-    Msg3():
-        etl::imessage(3),
-        Flag(false),
-        OtherData(0),
-        Val(0)
-    {}
-};
-
-template <size_t Q_DEPTH>
-using PktQueue = etfw::msg::BlockingMsgQueue<etfw::msg::pkt*, Q_DEPTH>;
-
-
-TEST(MsgPool, RawAcquire)
-{
-    etfw::msg::Pool pool(10);
-    EXPECT_EQ(pool.stats().NumItems, 10);
-    EXPECT_EQ(pool.stats().ItemsAllocated, 0);
-
-    auto msg = pool.acquire_raw(100);
-    EXPECT_NE(msg, nullptr);
-    EXPECT_EQ(pool.stats().ItemsAllocated, 1);
-    EXPECT_EQ(msg->size(), 100);
-
-    msg->release();
-    EXPECT_EQ(pool.stats().ItemsAllocated, 0);
-
-    std::vector<etfw::msg::ref_counted_msg*> msgs;
-    for (size_t i = 0; i < 10; i++)
-    {
-        etfw::msg::ref_counted_msg* m = pool.acquire_raw(100);
-        EXPECT_NE(msg, nullptr);
-        EXPECT_EQ(msg->size(), 100);
-        EXPECT_EQ(pool.stats().ItemsAllocated, i+1);
-        EXPECT_EQ(pool.stats().WaterMark, i+1);
-        msgs.push_back(m);
-    }
-
-    // Pool depleted
-    msg = pool.acquire_raw(100);
-    EXPECT_EQ(msg, nullptr);
-
-    // Release all messages
-    for (size_t i = 0; i < 10; i++)
-    {
-        etfw::msg::ref_counted_msg* m = msgs.back();
-        m->release();
-        EXPECT_EQ(pool.stats().ItemsAllocated, 10 - (i+1));
-        EXPECT_EQ(pool.stats().WaterMark, 10);
-        msgs.pop_back();
-    }
-}
-
-TEST(MsgPool, AcquireFromMsg)
-{
-    etfw::msg::Pool pool(10);
-    etfw::msg::pkt* p1 = pool.acquire(Msg1{});
-    ASSERT_NE(p1, nullptr);
-
-    Msg1* msg1 = p1->as_p<Msg1>();
-    EXPECT_EQ(msg1->get_message_id(), 1);
-
-    etfw::msg::pkt* p2 = pool.acquire<Msg2>(55);
-    ASSERT_NE(p1, nullptr);
-    Msg2* msg2 = p2->as_p<Msg2>();
-    EXPECT_EQ(msg2->get_message_id(), 2);
-    EXPECT_EQ(msg2->OtherData, 55);
-
+    etfw::msg::Buf* buf2 = pool.allocate(static_cast<size_t>(64));
+    ASSERT_NE(buf2, nullptr);
+    EXPECT_EQ(buf2->buf_size(), 64);
     EXPECT_EQ(pool.stats().items_avail(), 8);
     EXPECT_EQ(pool.stats().WaterMark, 2);
-    EXPECT_EQ(pool.stats().ItemsAllocated, 2);
 
-    p1->release();
+    buf1->release();
     EXPECT_EQ(pool.stats().items_avail(), 9);
     EXPECT_EQ(pool.stats().WaterMark, 2);
-    EXPECT_EQ(pool.stats().ItemsAllocated, 1);
-
-    p2->release();
+    buf2->release();
     EXPECT_EQ(pool.stats().items_avail(), 10);
     EXPECT_EQ(pool.stats().WaterMark, 2);
-    EXPECT_EQ(pool.stats().ItemsAllocated, 0);
 }
 
-TEST(MsgPool, AcquireAndQueue)
+TEST(MsgBuf, AllocateFromMsg)
 {
-    PktQueue<5> q1;
-    PktQueue<2> q2;
-    PktQueue<10> q3;
+    struct M1 : public etfw::msg::iBaseMsg
+    {
+        M1():
+            etfw::msg::iBaseMsg(1)
+        {}
+    };
 
-    etfw::msg::Pool pool(10);
-    etfw::msg::pkt* p = pool.acquire(Msg1{});
+    struct M2 : public etfw::msg::iBaseMsg
+    {
+        int Val;
 
+        M2():
+            etfw::msg::iBaseMsg(2),
+            Val(55)
+        {}
+
+        M2(int val):
+            etfw::msg::iBaseMsg(2),
+            Val(val)
+        {}
+    };
+
+    struct M3 : public etfw::msg::iBaseMsg
+    {
+        bool Flag;
+        uint8_t Data[20];
+        size_t NumBytes;
+
+        M3():
+            etfw::msg::iBaseMsg(3),
+            Flag(false),
+            NumBytes(0)
+        {}
+
+        M3(bool flag, std::vector<uint8_t> data):
+            etfw::msg::iBaseMsg(3),
+            Flag(flag),
+            NumBytes(data.size() < 20 ? data.size() : 20)
+        {
+            memcpy(Data, data.data(), NumBytes);
+        }
+
+        void ut_comp(std::vector<uint8_t> expected)
+        {
+            size_t len = expected.size();
+            ASSERT_LE(len, 20);
+
+            for (size_t i = 0; i < len; ++i)
+            {
+                EXPECT_EQ(Data[i], expected[i]);
+            }
+
+            for (size_t i = len; i < 20; ++i)
+            {
+                EXPECT_EQ(Data[i], 0);
+            }
+        }
+    };
+
+    Pool pool(10);
+
+    // Allocate message of type with no constructor args
+    etfw::msg::Buf* buf = pool.allocate<M1>();
+    ASSERT_NE(buf, nullptr);
+    EXPECT_EQ(buf->buf_size(), sizeof(M1));
+    EXPECT_EQ(buf->get_message().get_message_id(), 1);
+    EXPECT_EQ(pool.stats().items_avail(), 9);
     EXPECT_EQ(pool.stats().WaterMark, 1);
-    EXPECT_EQ(pool.stats().ItemsAllocated, 1);
+    buf->release();
+    EXPECT_EQ(pool.stats().items_avail(), 10);
 
-    p->ref_count().set_reference_count(2);
-    q1.emplace(p);
-    q3.emplace(p);
+    // Allocate message of type with default constructor
+    buf = pool.allocate<M2>();
+    ASSERT_NE(buf, nullptr);
+    EXPECT_EQ(buf->buf_size(), sizeof(M2));
+    EXPECT_EQ(buf->get_message().get_message_id(), 2);
+    EXPECT_EQ(pool.stats().items_avail(), 9);
+    auto concrete_msg1 = buf->get_message_type<M2>();
+    EXPECT_EQ(concrete_msg1.Val, 55);
+    buf->release();
+    EXPECT_EQ(pool.stats().items_avail(), 10);
 
-    etfw::msg::pkt* p_out = nullptr;
-    bool result = q1.front(p_out);
-    EXPECT_TRUE(result);
-    ASSERT_NE(p_out, nullptr);
-    EXPECT_EQ(p_out->message_id(), 1);
-    p_out->release();
-    // msg not fully released, since ref count was 2
-    EXPECT_EQ(pool.stats().ItemsAllocated, 1);
+    // Allocate message of same type with constructor arg
+    buf = pool.allocate<M2>(22);
+    ASSERT_NE(buf, nullptr);
+    EXPECT_EQ(buf->buf_size(), sizeof(M2));
+    EXPECT_EQ(buf->get_message().get_message_id(), 2);
+    EXPECT_EQ(pool.stats().items_avail(), 9);
+    auto concrete_msg2 = buf->get_message_type<M2>();
+    EXPECT_EQ(concrete_msg2.Val, 22);
+    buf->release();
+    EXPECT_EQ(pool.stats().items_avail(), 10);
 
-    result = q3.front(p_out);
-    EXPECT_TRUE(result);
-    ASSERT_NE(p_out, nullptr);
-    EXPECT_EQ(p_out->message_id(), 1);
-    p_out->release();
-    // msg fully released
-    EXPECT_EQ(pool.stats().ItemsAllocated, 0);
+    // Allocate message with more complex constructor
+    buf = pool.allocate<M3>(true, std::vector<uint8_t>{
+        0x01, 0x02, 0x03, 0x04, 0x05});
+    ASSERT_NE(buf, nullptr);
+    EXPECT_EQ(buf->buf_size(), sizeof(M3));
+    EXPECT_EQ(buf->get_message().get_message_id(), 3);
+    EXPECT_EQ(pool.stats().items_avail(), 9);
+    auto concrete_msg3 = buf->get_message_type<M3>();
+    EXPECT_EQ(concrete_msg3.Flag, true);
+    EXPECT_EQ(concrete_msg3.NumBytes, 5);
+    concrete_msg3.ut_comp({1, 2, 3, 4, 5});
 
-    p = pool.acquire<Msg3>(true, 99, 55);
-    ASSERT_NE(p, nullptr);
-    p->ref_count().set_reference_count(3);
-    q1.emplace(p);
-    q2.emplace(p);
-    q3.emplace(p);
+    // Construct from copy
+    etfw::msg::Buf* buf2 = pool.allocate(concrete_msg3);
+    ASSERT_NE(buf2, nullptr);
+    EXPECT_NE(buf, buf2) << "Allocated buf addresses are the same";
+    EXPECT_EQ(buf2->buf_size(), sizeof(M3));
+    EXPECT_EQ(buf2->get_message().get_message_id(), 3);
+    EXPECT_EQ(pool.stats().items_avail(), 8);
+    auto concrete_copy = buf2->get_message_type<M3>();
+    EXPECT_EQ(concrete_copy.Flag, true);
+    EXPECT_EQ(concrete_copy.NumBytes, 5);
+    concrete_copy.ut_comp({1, 2, 3, 4, 5});
 
-    etfw::msg::pkt* p_out1 = nullptr;
-    etfw::msg::pkt* p_out2 = nullptr;
-    etfw::msg::pkt* p_out3 = nullptr;
+    // Release original buf and copied message buf
+    buf->release();
+    EXPECT_EQ(pool.stats().items_avail(), 9) << "og buf not released";
+    buf2->release();
+    EXPECT_EQ(pool.stats().items_avail(), 10) << "Buf from copy not released";
+}
 
-    result = q1.front(p_out1);
-    EXPECT_TRUE(result);
-    ASSERT_NE(p_out1, nullptr);
-    EXPECT_EQ(p_out1->message_id(), 3);
-    EXPECT_EQ(p_out1->as_p<Msg3>()->Flag, true);
-    EXPECT_EQ(p_out1->as_p<Msg3>()->OtherData, 99);
-    EXPECT_EQ(p_out1->as_p<Msg3>()->Val, 55);
-    EXPECT_EQ(p_out1->ref_count().get_reference_count(), 3);
-    p_out1->release();
-    EXPECT_EQ(p_out1->ref_count().get_reference_count(), 2);
-    EXPECT_EQ(pool.stats().ItemsAllocated, 1);
-
-    result = q2.front(p_out2);
-    EXPECT_TRUE(result);
-    ASSERT_NE(p_out1, nullptr);
-    EXPECT_EQ(p_out1->message_id(), 3);
-    EXPECT_EQ(p_out1->as_p<Msg3>()->Flag, true);
-    EXPECT_EQ(p_out1->as_p<Msg3>()->OtherData, 99);
-    EXPECT_EQ(p_out1->as_p<Msg3>()->Val, 55);
-    EXPECT_EQ(p_out1->ref_count().get_reference_count(), 2);
-    p_out1->release();
-    EXPECT_EQ(p_out1->ref_count().get_reference_count(), 1);
-    EXPECT_EQ(pool.stats().ItemsAllocated, 1);
-
-    result = q3.front(p_out3);
-    EXPECT_TRUE(result);
-    ASSERT_NE(p_out1, nullptr);
-    EXPECT_EQ(p_out1->message_id(), 3);
-    EXPECT_EQ(p_out1->as_p<Msg3>()->Flag, true);
-    EXPECT_EQ(p_out1->as_p<Msg3>()->OtherData, 99);
-    EXPECT_EQ(p_out1->as_p<Msg3>()->Val, 55);
-    EXPECT_EQ(p_out1->ref_count().get_reference_count(), 1);
-    p_out1->release();
-    EXPECT_EQ(pool.stats().ItemsAllocated, 0);
 }

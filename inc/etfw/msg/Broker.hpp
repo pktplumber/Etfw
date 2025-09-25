@@ -4,6 +4,8 @@
 #include <etl/message_broker.h>
 #include "Message.hpp"
 #include "Pool.hpp"
+#include "Pipe.hpp"
+#include <os/Mutex.hpp>
 
 #ifndef MSG_MAX_NUM_SUBSCRIPTIONS
 #define MSG_MAX_NUM_SUBSCRIPTIONS   64
@@ -53,6 +55,32 @@ namespace etfw::msg {
         ):
             Base_t(pipe)
         {}
+
+        /// @brief Construct subscription from static message types
+        /// @tparam ...TMsgs Message types. Must derive from iBaseMsg
+        /// @param[in] pipe Subscribed pipe
+        template <typename... TMsgs>
+        Subscription(
+            etl::imessage_router& pipe
+        ):
+            Base_t(pipe)
+        {
+            static_assert((etl::is_base_of<iBaseMsg, TMsgs>::value && ...),
+                "Types must derive from iBaseMsg");
+            (IdList.emplace_back(static_cast<const iBaseMsg&>(TMsgs()).get_message_id()), ...);
+        }
+
+        template <typename... TMsgs>
+        Subscription(
+            etl::imessage_router& pipe,
+            TMsgs&&... msgs
+        ):
+            Base_t(pipe)
+        {
+            static_assert((etl::is_base_of<iBaseMsg, TMsgs>::value && ...),
+                "Types must derive from iBaseMsg");
+            (IdList.emplace_back(static_cast<const iBaseMsg&>(TMsgs()).get_message_id()), ...);
+        }
 
         /// @brief Returns a view of the subscribed message IDs
         /// @return Message ID view
@@ -115,7 +143,7 @@ namespace etfw::msg {
         static SharedMsg create_from_size(TPool& owner, size_t size)
         {
             etl::ireference_counted_message* p_msg = owner.allocate_raw(size);
-
+            assert(p_msg != nullptr && "Failed to allocate message");
             if (p_msg != nullptr)
             {
                 p_msg->get_reference_counter().set_reference_count(1U);
@@ -125,23 +153,79 @@ namespace etfw::msg {
         }
     };
 
-    class Broker : public etl::message_broker
+
+
+    class Broker : etl::message_broker
     {
     public:
-        void send(const iMsg& msg, const size_t msg_sz)
+        struct Stats
         {
-            
-        }
+            size_t RegisteredPipes;
+            size_t NumSendCalls;
+            size_t AllocateFailures;
+        };
 
+        using Base_t = etl::message_broker;
+
+        /// TODO: un-expose these methods after refactor
+        using Base_t::receive;
+        using Base_t::subscribe;
+
+        Broker();
+
+        void send(const iMsg& msg, const size_t msg_sz);
+
+        /// @brief Send copy of message
+        /// @tparam TMsg 
+        /// @param msg 
         template <typename TMsg>
         void send(const TMsg& msg)
         {
-            static_assert(etl::is_base_of<iMsg, TMsg>::value,
+            static_assert(etl::is_base_of<iBaseMsg, TMsg>::value,
                 "Message type must derive from etfw::msg::imsg");
-            send(msg, sizeof(TMsg));
+            Buf* buf = msg_pool_.allocate<TMsg>(msg);
+            if (buf != nullptr)
+            {
+                send(*buf);
+            }
+            else
+            {
+                // failed to allocate message buffer
+                stats_.AllocateFailures++;
+            }
         }
+
+        template <typename TMsg, typename... TArgs>
+        void send(TArgs&&... args)
+        {
+            static_assert(etl::is_base_of<iBaseMsg, TMsg>::value,
+                "Message type must derive from iMsg");
+            Buf* buf = msg_pool_.allocate<TMsg>(args...);
+            if (buf != nullptr)
+            {
+                send(*buf);
+            }
+            else
+            {
+                // failed to allocate message buffer
+                stats_.AllocateFailures++;
+            }
+        }
+
+        void send(Buf& msg_buf);
+
+        void register_pipe(iPipe& pipe);
+
+        void unregister_pipe(iPipe& pipe);
+
+        inline const MsgBufPool::Stats& pool_stats() const { return msg_pool_.stats(); }
+
+        inline const Stats& stats() const { return stats_; }
+
     private:
-        Pool msg_pool_;
+        MsgBufPool msg_pool_;
+        Os::Mutex lock_;
+        Stats stats_;
     };
 
 

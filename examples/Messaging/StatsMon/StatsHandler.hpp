@@ -3,7 +3,7 @@
 
 #include <etfw/svcs/App.hpp>
 #include <etfw/msg/Message.hpp>
-#include <etfw/msg/MsgBroker.hpp>
+#include <etfw/msg/Broker.hpp>
 #include <etfw/msg/Router.hpp>
 #include <etfw/msg/BlockingMsgQueue.hpp>
 #include "StatsMsgTbl.hpp"

@@ -111,7 +111,7 @@ namespace etfw::msg
             msg_sz_(sizeof(TMsg))
         {
             // Construct at allocated buffer. Assumes buf has been allocated by pool
-            new(data()) TMsg();
+            new(data()) TMsg(msg);
         }
 
         MsgBufPool& owner_;

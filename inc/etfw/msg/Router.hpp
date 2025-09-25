@@ -2,8 +2,9 @@
 #pragma once
 
 #include <etl/message_router.h>
-#include "MsgBroker.hpp"
+#include "Broker.hpp"
 #include "BlockingMsgQueue.hpp"
+#include "Subscription.hpp"
 
 namespace etfw {
 namespace msg {

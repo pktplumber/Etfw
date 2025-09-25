@@ -26,6 +26,8 @@ namespace etfw::msg
             const size_t NumItems;
             size_t ItemsAllocated;
             size_t WaterMark;
+            size_t AllocCount;
+            size_t ReleaseCount;
 
             Stats(size_t num_items);
 
@@ -38,29 +40,33 @@ namespace etfw::msg
 
             inline size_t items_avail() const
             {
-                return NumItems - ItemsAllocated;
+                return (NumItems - ItemsAllocated);
             }
-
+ 
             Stats& operator++();
-
             Stats operator++(int);
-
             Stats& operator--();
-
             Stats operator--(int);
         };
 
-        void release(const etl::ireference_counted_message& msg) override
-        {
-            lock();
-            //if (msg.get_reference_counter().get_reference_count() == 0)
-            //{
-                ::operator delete(static_cast<void*>(const_cast<etl::ireference_counted_message*>(&msg)));
-                --stats_;
-            //}
-            unlock();
-        }
 
+        /// TODO: need to construct with allocator or something, No max_items arg
+        MsgBufPool();
+        MsgBufPool(size_t max_items);
+
+        void release(const etl::ireference_counted_message& msg) override;
+
+        void lock() override;
+
+        void unlock() override;
+
+        inline const Stats& stats() const { return stats_; }
+
+        /// @brief Allocate and create message
+        /// @tparam TMsg Message type
+        /// @tparam ...TArgs TMsg constructor argument types
+        /// @param ...args TMsg constructor arguments
+        /// @return Allocated msg buffer. Nullptr if allocation failed
         template <typename TMsg, typename... TArgs>
         Buf* allocate(TArgs&&... args)
         {
@@ -80,6 +86,10 @@ namespace etfw::msg
             return ret;
         }
 
+        /// @brief Allocate message buffer and copy input message
+        /// @tparam TMsg Copied message type
+        /// @param msg Message to copy
+        /// @return Allocated msg buffer. Nullptr if allocation failed
         template <typename TMsg>
         Buf* allocate(const TMsg& msg)
         {
@@ -98,86 +108,17 @@ namespace etfw::msg
             return ret;
         }
 
-        template <typename TMsg>
-        Buf* allocate()
-        {
-            Buf* ret = nullptr;
-            const size_t total_sz = sizeof(Buf)+sizeof(TMsg);
-
-            lock();
-            ret = static_cast<Buf*>(allocate_raw(total_sz, etl::alignment_of<TMsg>::value));
-            unlock();
-
-            if (ret != nullptr)
-            {
-                new(ret) Buf(*this, sizeof(TMsg));
-                // Construct message into buffer
-                new(ret->data()) TMsg();
-            }
-
-            return ret;
-        }
-
-        Buf* allocate(const size_t sz)
-        {
-            Buf* ret = nullptr;
-            const size_t total_sz = sizeof(Buf) + sz;
-
-            lock();
-            ret = static_cast<Buf*>(allocate_raw(total_sz, etl::alignment_of<void*>::value));
-            unlock();
-
-            if (ret != nullptr)
-            {
-                new(ret) Buf(*this, sz);
-            }
-
-            return ret;
-        }
-    
-        void lock() override
-        {
-            mut_.lock();
-        }
-
-        void unlock() override
-        {
-            mut_.unlock();
-        }
-
-        MsgBufPool()
-        {
-            auto stat = mut_.init();
-            assert(stat.success() &&
-                "Failed to initialize mutex");
-        }
-
-        MsgBufPool(size_t max_items):
-            stats_(max_items)
-        {
-            auto stat = mut_.init();
-            assert(stat.success() &&
-                "Failed to initialize mutex");
-        }
-
-        inline Stats& stats() { return stats_; }
-
-        inline const Stats& stats() const { return stats_; }
+        /// @brief Allocate a raw message buf of bytes "sz".
+        ///     User is responsible for constructing the appropriate class
+        /// @param sz Bytes to allocate
+        /// @return Allocated msg buffer. Nullptr if allocation failed
+        Buf* allocate(const size_t sz);
 
     private:
         Os::Mutex mut_;
         Stats stats_;
 
-        void* allocate_raw(size_t sz, size_t alignment)
-        {
-            void* ret = nullptr;
-            if (stats_.mem_avail())
-            {
-                ret = (void*)(new uint8_t[(sz+3) & ~3]);
-                stats_++;
-            }
-            return ret;
-        }
+        void* allocate_raw(size_t sz, size_t alignment);
     };
 
 

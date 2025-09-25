@@ -2,7 +2,7 @@
 #pragma once
 
 #include "Message.hpp"
-#include "MsgBroker.hpp"
+#include "Broker.hpp"
 #include "status.hpp"
 
 namespace etfw {
