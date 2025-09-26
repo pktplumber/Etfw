@@ -94,7 +94,6 @@ public:
         update_rx_vars(msg.get_message_id());
         printf("Received message %d\n", msg.get_message_id());
     }
-
 private:
 };
 
@@ -143,7 +142,7 @@ private:
 
 // ~~~~~~~~~~~~~~~~~~~~ Start tests ~~~~~~~~~~~~~~~~~~~~
 
-TEST(MsgBroker, Init)
+TEST(MsgBroker, SimplePipe)
 {
     etfw::msg::Broker broker;
     SimplePipe pipe1({1, 2});
@@ -175,27 +174,76 @@ TEST(MsgBroker, Init)
     EXPECT_EQ(broker.pool_stats().ReleaseCount, 2);
     EXPECT_EQ(pipe1.last_rx_id(), 2);
     EXPECT_EQ(pipe2.last_rx_id(), 2);
+}
 
-    // Test message with deferred (queued) processing
+TEST(MsgBroker, QueuedMsgs)
+{
+    // Setup
+    etfw::msg::Broker broker;
+    QueuedPipe pipe3({3});
+    broker.register_pipe(pipe3);
+
+    // Queue 1 message
     broker.send<M3>();
-    EXPECT_EQ(pipe1.rx_count(), 2);
-    EXPECT_EQ(pipe2.rx_count(), 1);
     EXPECT_EQ(pipe3.rx_count(), 0);
     EXPECT_EQ(pipe3.items_queued(), 1);
     EXPECT_EQ(broker.pool_stats().ItemsAllocated, 1);
-    EXPECT_EQ(broker.pool_stats().AllocCount, 3);
-    EXPECT_EQ(broker.pool_stats().ReleaseCount, 2);
+    EXPECT_EQ(broker.pool_stats().AllocCount, 1);
+    EXPECT_EQ(broker.pool_stats().ReleaseCount, 0);
     pipe3.process_queue();
-    EXPECT_EQ(pipe1.rx_count(), 2);
-    EXPECT_EQ(pipe2.rx_count(), 1);
     EXPECT_EQ(pipe3.rx_count(), 1);
     EXPECT_EQ(pipe3.items_queued(), 0);
     EXPECT_EQ(broker.pool_stats().ItemsAllocated, 0);
-    EXPECT_EQ(broker.pool_stats().AllocCount, 3);
-    EXPECT_EQ(broker.pool_stats().ReleaseCount, 3);
-    EXPECT_EQ(pipe1.last_rx_id(), 2);
-    EXPECT_EQ(pipe2.last_rx_id(), 2);
+    EXPECT_EQ(broker.pool_stats().AllocCount, 1);
+    EXPECT_EQ(broker.pool_stats().ReleaseCount, 1);
     EXPECT_EQ(pipe3.last_rx_id(), 3);
+
+    // Test pipe overflow
+    broker.send<M3>(); // 1
+    EXPECT_EQ(broker.pool_stats().ItemsAllocated, 1);
+    EXPECT_EQ(broker.pool_stats().AllocCount, 2);
+    EXPECT_EQ(broker.pool_stats().ReleaseCount, 1);
+    EXPECT_EQ(pipe3.items_queued(), 1);
+    broker.send<M3>(); // 2
+    EXPECT_EQ(broker.pool_stats().ItemsAllocated, 2);
+    EXPECT_EQ(broker.pool_stats().AllocCount, 3);
+    EXPECT_EQ(broker.pool_stats().ReleaseCount, 1);
+    EXPECT_EQ(pipe3.items_queued(), 2);
+    broker.send<M3>(); // 3
+    EXPECT_EQ(broker.pool_stats().ItemsAllocated, 3);
+    EXPECT_EQ(broker.pool_stats().AllocCount, 4);
+    EXPECT_EQ(broker.pool_stats().ReleaseCount, 1);
+    EXPECT_EQ(pipe3.items_queued(), 3);
+    broker.send<M3>(); // 4
+    EXPECT_EQ(broker.pool_stats().ItemsAllocated, 4);
+    EXPECT_EQ(broker.pool_stats().AllocCount, 5);
+    EXPECT_EQ(broker.pool_stats().ReleaseCount, 1);
+    EXPECT_EQ(pipe3.items_queued(), 4);
+    broker.send<M3>(); // 5
+    EXPECT_EQ(broker.pool_stats().ItemsAllocated, 5);
+    EXPECT_EQ(broker.pool_stats().AllocCount, 6);
+    EXPECT_EQ(broker.pool_stats().ReleaseCount, 1);
+    EXPECT_EQ(pipe3.items_queued(), 5);
+
+    // Pipe now full
+    broker.send<M3>();
+    EXPECT_EQ(broker.pool_stats().ItemsAllocated, 5);
+    EXPECT_EQ(broker.pool_stats().AllocCount, 7);
+    EXPECT_EQ(broker.pool_stats().ReleaseCount, 2);
+    EXPECT_EQ(pipe3.items_queued(), 5);
+
+    // Start processing pipe
+    pipe3.process_queue();
+    EXPECT_EQ(broker.pool_stats().ItemsAllocated, 0);
+    EXPECT_EQ(broker.pool_stats().AllocCount, 7);
+    EXPECT_EQ(broker.pool_stats().ReleaseCount, 7);
+    EXPECT_EQ(pipe3.items_queued(), 0);
+    EXPECT_EQ(pipe3.last_rx_id(), 3);
+}
+
+TEST(MsgBroker, ComplexMsg)
+{
+    
 }
 
 }
