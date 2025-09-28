@@ -126,14 +126,39 @@ namespace etfw::msg
 
     struct iBaseMsg : public etl::imessage
     {
+        size_t MsgSize;
+
         iBaseMsg(MsgId_t id):
-            etl::imessage(id)
+            etl::imessage(id),
+            MsgSize(sizeof(iBaseMsg))
         {}
 
         iBaseMsg():
-            etl::imessage(0)
+            etl::imessage(0),
+            MsgSize(sizeof(iBaseMsg))
         {}
+
+        iBaseMsg(MsgId_t id, size_t sz):
+            etl::imessage(id),
+            MsgSize(sz)
+        {
+            assert(sz >= sizeof(iBaseMsg) &&
+                "Message size invalid");
+        }
+
+        template <typename TDerived>
+        const TDerived& convert() const
+        {
+            //assert(sizeof(TDerived) <= MsgSize &&
+            //    "Invalid down cast");
+            return *static_cast<const TDerived*>(this);
+        }
     };
+
+    inline const iBaseMsg& convert(const etl::imessage& msg)
+    {
+        return *static_cast<const iBaseMsg*>(&msg);
+    }
 
     struct iMsg : public etl::imessage
     {

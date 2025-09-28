@@ -49,6 +49,10 @@ namespace etfw::msg
         template <typename MsgT>
         MsgT& get_message_type()
         {
+            static_assert(etl::is_base_of<iBaseMsg, MsgT>::value,
+                "Message must be of type iBaseMsg");
+            assert(sizeof(MsgT) <= msg_sz_ &&
+                "Attempt to convert to message with invalid size");
             return *static_cast<MsgT*>(data());
         }
 
