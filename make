@@ -20,6 +20,9 @@ for arg in "$@"; do
         TESTS)
             ADD_UNIT_TESTS=ON
             ;;
+        COVERAGE)
+            UT_COVERAGE=ON
+            ;;
         EXAMPLES)
             ADD_EXAMPLES=ON
             ;;

@@ -24,38 +24,3 @@ size_t Buf::buf_size()
 {
     return msg_sz_;
 }
-
-pkt::pkt(Pool& pool, size_t sz):
-    owner_(pool),
-    msg_sz_(sz)
-{
-    ref_count_.set_reference_count(1);
-}
-
-pkt::pkt(Pool& pool, size_t sz, int32_t refs):
-    owner_(pool),
-    msg_sz_(sz)
-{
-    ref_count_.set_reference_count(refs);
-}
-
-void pkt::release()
-{
-    owner_.release(*this);
-}
-
-uint8_t* pkt::data_buf()
-{
-    return reinterpret_cast<uint8_t*>(this+1);
-}
-
-MsgId_t pkt::message_id()
-{
-    return as_p<etl::imessage>()->get_message_id();
-}
-
-template <typename T>
-T* pkt::data()
-{
-    return static_cast<T*>(this+1);
-}

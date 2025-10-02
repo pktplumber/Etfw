@@ -14,35 +14,43 @@
 
 namespace etfw::msg
 {
-    using ref_counted_msg = pkt;
 
     class MsgBufPool : public etl::ireference_counted_message_pool
     {
     public:
         using Buf_t = Buf;
 
+        /// @brief Message buffer pool statistics
         struct Stats
         {
-            const size_t NumItems;
-            size_t ItemsAllocated;
-            size_t WaterMark;
-            size_t AllocCount;
-            size_t ReleaseCount;
+            const size_t NumItems;  //< Number of items allocated in the pool
+            size_t ItemsInUse;      //< Items currently in use/unfreed
+            size_t WaterMark;       //< Highest number of items in use at once
+            size_t AllocCount;      //< Count of items successfully allocated
+            size_t ReleaseCount;    //< Count of items successfully released
 
+            /// @brief Construct stats with NumItems set
+            /// @param num_items Number of items in the pool
             Stats(size_t num_items);
 
             Stats();
 
+            /// @brief Checks if any items are available to be allocated
+            /// @return True if items can be allocated. False if the pool is
+            ///     depleted.
             inline bool mem_avail() const
             {
-                return (ItemsAllocated < NumItems);
+                return (ItemsInUse < NumItems);
             }
 
+            /// @brief Calculates the number of items available
+            /// @return Number of items available for allocation
             inline size_t items_avail() const
             {
-                return (NumItems - ItemsAllocated);
+                return (NumItems - ItemsInUse);
             }
  
+            // Custom operators
             Stats& operator++();
             Stats operator++(int);
             Stats& operator--();
@@ -54,12 +62,17 @@ namespace etfw::msg
         MsgBufPool();
         MsgBufPool(size_t max_items);
 
+        /// @brief Release from a reference counted message
+        /// @param msg Message to release
         void release(const etl::ireference_counted_message& msg) override;
 
-        void lock() override;
+        /// @brief Release a raw memory buffer. Buffer must have been
+        ///     allocated from this pool
+        /// @param[in] buf Buffer to release
+        void release(Buf* buf);
 
-        void unlock() override;
-
+        /// @brief Get the pool statistics
+        /// @return Const reference to the pool statistics
         inline const Stats& stats() const { return stats_; }
 
         /// @brief Allocate and create message
@@ -109,7 +122,8 @@ namespace etfw::msg
         }
 
         /// @brief Allocate a raw message buf of bytes "sz".
-        ///     User is responsible for constructing the appropriate class
+        ///     User is responsible for copying the appropriate class
+        ///     into the buffer. 
         /// @param sz Bytes to allocate
         /// @return Allocated msg buffer. Nullptr if allocation failed
         Buf* allocate(const size_t sz);
@@ -118,107 +132,16 @@ namespace etfw::msg
         Os::Mutex mut_;
         Stats stats_;
 
+        /// @brief Allocates the raw memory buffer
+        /// @param[in] sz Size to allocate
+        /// @param[in] alignment Buffer alignment
+        /// @return Raw memory buffer. Null if pool is depleted
         void* allocate_raw(size_t sz, size_t alignment);
+
+        /// @brief Lock the pool. Must be called before allocation or release.
+        void lock() override;
+
+        /// @brief Unlock the pool. Must be called after allocation or release.
+        void unlock() override;
     };
-
-
-    class Pool
-    {
-    public:
-        using counter_t = std::atomic_uint32_t;
-        template <typename TMsg>
-        using MsgOut_t = etl::reference_counted_message<TMsg, counter_t>;
-
-        struct Stats
-        {
-            const size_t NumItems;
-            size_t ItemsAllocated;
-            size_t WaterMark;
-
-            Stats(size_t num_items);
-
-            Stats();
-
-            inline bool mem_avail() const
-            {
-                return (ItemsAllocated < NumItems);
-            }
-
-            inline size_t items_avail() const
-            {
-                return NumItems - ItemsAllocated;
-            }
-
-            Stats& operator++();
-
-            Stats operator++(int);
-
-            Stats& operator--();
-
-            Stats operator--(int);
-        };
-
-        Pool();
-
-        Pool(size_t max_items);
-
-        void release(ref_counted_msg& msg);
-
-        ref_counted_msg* acquire_raw(const size_t msg_sz);
-
-        template <typename MsgT>
-        pkt* acquire(const MsgT& msg)
-        {
-            static_assert(etl::is_base_of<etl::imessage, MsgT>::value,
-                "MsgT must derive from etl::imessage");
-            pkt* p = acquire_raw(sizeof(MsgT));
-            if (p)
-            {
-                // Construct msg into packet data buffer
-                new (p->data_buf()) MsgT(msg);
-            }
-
-            return p;
-        }
-
-        template <typename MsgT, typename... Args>
-        pkt* acquire(Args&&... args)
-        {
-            static_assert(etl::is_base_of<etl::imessage, MsgT>::value,
-                "MsgT must derive from message type");
-            pkt* p = acquire_raw(sizeof(MsgT));
-            if (p)
-            {
-                new (p->data_buf()) MsgT(etl::forward<Args>(args)...);
-            }
-            return p;
-        }
-
-        pkt* allocate_raw(const size_t sz);
-
-        template <typename TMsg, typename... TArgs>
-        MsgOut_t<TMsg>* allocate(TArgs&&... args)
-        {
-            static_assert(etl::is_base_of<etl::imessage, TMsg>::value,
-                "Not a message type");
-            using ret_t = MsgOut_t<TMsg>;
-
-            ret_t* ret = acquire_raw(sizeof(ret_t));
-            //if (ret)
-            //{
-            //    new()
-            //}
-        }
-
-        void lock();
-
-        void unlock();
-
-        inline const Stats& stats() const { return stats_; }
-
-    private:
-        Os::Mutex mut_;
-        Stats stats_;
-    };
-
 }

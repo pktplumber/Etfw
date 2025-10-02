@@ -27,9 +27,18 @@ message(STATUS "Using OSAL dir : ${OSAL_SRC_DIR}")
 
 # ~~~~~~ Options ~~~~~~
 option(ENABLE_UNIT_TESTS "Enable building unit tests" OFF)
+option(UT_COVERAGE "Generate code coverage report with unit tests" OFF)
 option(EXAMPLES "Compile examples" OFF)
 
-# ~~~~~~ Fetch unit test content ~~~~~~
+# Optimizations must be turned off if generating line coverage
+if (ENABLE_UNIT_TESTS)
+    # Only add options if unit tests are enabled
+    if(UT_COVERAGE)
+        message(STATUS "Building unit tests with coverage reports")
+        add_compile_options(--coverage -O0 -g)
+        add_link_options(--coverage)
+    endif()
+endif()
 
 # ~~~~~~ Inc ~~~~~~
 set(PUBLIC_INCLUDE_DIR "${ETFW_INC}")

@@ -163,6 +163,8 @@ namespace etfw::msg {
             size_t RegisteredPipes;
             size_t NumSendCalls;
             size_t AllocateFailures;
+
+            Stats();
         };
 
         using Base_t = etl::message_broker;
@@ -186,7 +188,7 @@ namespace etfw::msg {
             Buf* buf = msg_pool_.allocate<TMsg>(msg);
             if (buf != nullptr)
             {
-                send(*buf);
+                send_buf(*buf);
             }
             else
             {
@@ -203,7 +205,7 @@ namespace etfw::msg {
             Buf* buf = msg_pool_.allocate<TMsg>(args...);
             if (buf != nullptr)
             {
-                send(*buf);
+                send_buf(*buf);
             }
             else
             {
@@ -212,15 +214,43 @@ namespace etfw::msg {
             }
         }
 
-        void send(Buf& msg_buf);
+        /// @brief Send a pre-allocated message buffer
+        /// @warning Buffer cannot be used after this is called.
+        /// @details This method routes a pre-allocated message buffer (from
+        ///     "get_message_buf" to the appropriate pipes. The used is
+        ///     responsible for copying a valid message into the buffer's
+        ///     data field. If the message does not have any subscribers, the
+        ///     buffer is returned to the pool.
+        /// @param[in] msg_buf Message buffer to send
+        void send_buf(Buf& msg_buf);
 
+        /// @brief Register a pipe
+        /// @param pipe 
         void register_pipe(iPipe& pipe);
 
         void unregister_pipe(iPipe& pipe);
 
-        inline const MsgBufPool::Stats& pool_stats() const { return msg_pool_.stats(); }
+        /// @brief Get the internal memory pool statistics
+        /// @return Message buffer pool statistics
+        inline const MsgBufPool::Stats& pool_stats() const
+        { return msg_pool_.stats(); }
 
+        /// @brief Get the broker's statistics
+        /// @return Broker's internal statistics
         inline const Stats& stats() const { return stats_; }
+
+        /// @brief Get a message buffer. Allows for zero-copy routing.
+        /// @warning User is responsible for memory management. If a buffer is
+        ///     acquired and unused, it must be release via 
+        ///     "return_message_buf". The user must copy a valid message into
+        ///     the buffer before sending via the "send_buf" method. Once the
+        ///     buffer is sent, it is no longer considered valid and should not
+        ///     be used.
+        /// @param[in] buf_sz Size of the buffer to allocate
+        /// @return Pointer to message buffer class. Nullptr on failure.
+        Buf* get_message_buf(const size_t buf_sz);
+
+        void return_message_buf(Buf* buf);
 
     private:
         MsgBufPool msg_pool_;

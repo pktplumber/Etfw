@@ -56,6 +56,16 @@ namespace etfw::msg
         /// @return Reference to the message subscription
         inline Subscription_t& subs() { return subbed_msgs_; }
 
+        inline Subscription_t::Status subscribe(const MsgId_t id)
+        {
+            return subbed_msgs_.subscribe(id);
+        }
+
+        inline Subscription_t::Status unsubscribe(const MsgId_t id)
+        {
+            return subbed_msgs_.unsubscribe(id);
+        }
+
     protected:
         /// @brief Default constructor. Builds empty message subscription
         iPipe():

@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <etl/message.h>
 #include "svcs/SvcTypes.hpp"
+#include <stdio.h>
 
 #ifndef ETFW_MSG_FUNC_ID_OFFSET
 #define ETFW_MSG_FUNC_ID_OFFSET     0
@@ -155,9 +156,12 @@ namespace etfw::msg
         }
     };
 
-    inline const iBaseMsg& convert(const etl::imessage& msg)
+    template <typename DerivedT>
+    inline const DerivedT& convert(const etl::imessage& msg)
     {
-        return *static_cast<const iBaseMsg*>(&msg);
+        static_assert(etl::is_base_of<iBaseMsg, DerivedT>::value,
+            "Type must derive from iBaseMsg");
+        return *static_cast<const DerivedT*>(&msg);
     }
 
     struct iMsg : public etl::imessage

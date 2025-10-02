@@ -3,6 +3,12 @@
 
 using namespace etfw::msg;
 
+Broker::Stats::Stats():
+    RegisteredPipes(0),
+    NumSendCalls(0),
+    AllocateFailures(0)
+{}
+
 Broker::Broker():
     msg_pool_(100)
 {
@@ -15,7 +21,7 @@ void Broker::send(const iMsg& msg, const size_t msg_sz)
     //SharedMsg msg = SharedMsg::create_from_size(msg_pool_, msg_sz);
 }
 
-void Broker::send(Buf& msg_buf)
+void Broker::send_buf(Buf& msg_buf)
 {
     if (msg_buf.buf_size() >= sizeof(iBaseMsg))
     {
@@ -42,5 +48,21 @@ void Broker::unregister_pipe(iPipe& pipe)
 {
     lock_.lock();
     unsubscribe(pipe);
+    stats_.RegisteredPipes--;
     lock_.unlock();
+}
+
+Buf* Broker::get_message_buf(const size_t buf_sz)
+{
+    // The message pool has an internal lock, no need to lock here
+    return msg_pool_.allocate(buf_sz);
+}
+
+void Broker::return_message_buf(Buf* buf)
+{
+    if (buf != nullptr)
+    {
+        // Pool should determine if buffer is actually owned by this broker
+        msg_pool_.release(buf);
+    }
 }

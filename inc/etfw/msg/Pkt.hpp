@@ -123,43 +123,5 @@ namespace etfw::msg
         const size_t msg_sz_;
     };
 
-    class Pool;
-
-    class pkt
-    {
-    public:
-        using RefCount_t = etl::reference_counter<std::atomic_int32_t>;
     
-        inline RefCount_t& ref_count()
-        {
-            return ref_count_;
-        }
-
-        void release();
-
-        uint8_t* data_buf();
-
-        template <typename T>
-        T* data();
-
-        template<typename T>
-        T* as_p()
-        {
-            return reinterpret_cast<T*>(data_buf());
-        }
-
-        inline size_t size() const { return msg_sz_; }
-
-        MsgId_t message_id();
-
-        friend class Pool;
-
-    private:
-        pkt(Pool& pool, size_t sz);
-        pkt(Pool& pool, size_t sz, int32_t refs);
-
-        Pool& owner_;
-        RefCount_t ref_count_;
-        const size_t msg_sz_;
-    };
 }
