@@ -44,7 +44,9 @@ namespace stats_mon
                 OK,
                 ID_ALREADY_IN_TBL,
                 ID_NOT_FOUND,
-                TBL_FULL
+                TBL_FULL,
+
+                COUNT
             };
 
             // Status code string representations

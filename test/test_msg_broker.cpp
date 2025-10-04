@@ -8,6 +8,9 @@
 #include <sstream>
 #include <string>
 
+// UT Namespace
+namespace {
+
 using BaseMsg_t = etfw::msg::iBaseMsg;
 using MsgId_t = etfw::msg::MsgId_t;
 
@@ -136,7 +139,8 @@ public:
     UtPipe(etfw::msg::iPipe::PipeId_t id):
         Base_t(id),
         MsgsReceived(0),
-        LastRxMsgId(etfw::msg::MsgIdRsvd)
+        LastRxMsgId(etfw::msg::MsgIdRsvd),
+        LastRxMsgLen(0)
     {}
 
     UtPipe(
@@ -145,12 +149,15 @@ public:
     ):
         Base_t(id, msg_ids),
         MsgsReceived(0),
-        LastRxMsgId(etfw::msg::MsgIdRsvd)
+        LastRxMsgId(etfw::msg::MsgIdRsvd),
+        LastRxMsgLen(0)
     {}
 
     inline size_t rx_count() const { return MsgsReceived; }
 
     inline MsgId_t last_rx_id() const { return LastRxMsgId; }
+
+    inline size_t last_rx_msg_len() const { return LastRxMsgLen; }
 
 protected:
     void update_rx_vars(const MsgId_t id)
@@ -159,9 +166,17 @@ protected:
         LastRxMsgId = id;
     }
 
+    void update_rx_vars(const BaseMsg_t& msg)
+    {
+        MsgsReceived++;
+        LastRxMsgId = msg.get_message_id();
+        LastRxMsgLen = msg.MsgSize;
+    }
+
 private:
     size_t MsgsReceived;
     MsgId_t LastRxMsgId;
+    size_t LastRxMsgLen;
 };
 
 class SimplePipe : public UtPipe
@@ -221,7 +236,8 @@ public:
         while (!q_.empty() && items_to_process > 0)
         {
             etl::shared_message sm = q_.front();
-            update_rx_vars(sm.get_message().get_message_id());
+            //update_rx_vars(sm.get_message().get_message_id());
+            update_rx_vars(*static_cast<const BaseMsg_t*>(&sm.get_message()));
             q_.pop();
             --items_to_process;
         }
@@ -807,4 +823,52 @@ namespace subscription_updates
         EXPECT_EQ(pipe1.last_rx_id(), M2_ID);
         EXPECT_EQ(pipe2.last_rx_id(), M1_ID);
     }
+}
+
+namespace dynamic_msg
+{
+    TEST(MsgBroker, DynamicMsg)
+    {
+        etfw::msg::Broker broker;
+        QueuedPipe pipe;
+        EXPECT_EQ(broker.stats().RegisteredPipes, 0);
+        broker.register_pipe(pipe);
+        EXPECT_EQ(broker.stats().RegisteredPipes, 1);
+        EXPECT_EQ(pipe.items_queued(), 0);
+
+        BaseMsg_t ut_msg1(0xAA, 240);
+        etfw::msg::Buf* buf = broker.get_message_buf(1024);
+        ASSERT_NE(buf, nullptr);
+        EXPECT_EQ(broker.pool_stats().ItemsInUse, 1);
+        EXPECT_EQ(broker.pool_stats().AllocCount, 1);
+        EXPECT_EQ(broker.pool_stats().ReleaseCount, 0);
+        memcpy(buf->data(), &ut_msg1, 240);
+        broker.send_buf(*buf);
+        EXPECT_EQ(broker.pool_stats().ItemsInUse, 0);
+        EXPECT_EQ(broker.pool_stats().AllocCount, 1);
+        EXPECT_EQ(broker.pool_stats().ReleaseCount, 1);
+        EXPECT_EQ(pipe.items_queued(), 0);
+
+        pipe.subscribe(0xAA);
+        buf = broker.get_message_buf(1024);
+        ASSERT_NE(buf, nullptr);
+        EXPECT_EQ(broker.pool_stats().ItemsInUse, 1);
+        EXPECT_EQ(broker.pool_stats().AllocCount, 2);
+        EXPECT_EQ(broker.pool_stats().ReleaseCount, 1);
+        memcpy(buf->data(), &ut_msg1, 240);
+        broker.send_buf(*buf);
+        EXPECT_EQ(broker.pool_stats().ItemsInUse, 1);
+        EXPECT_EQ(broker.pool_stats().AllocCount, 2);
+        EXPECT_EQ(broker.pool_stats().ReleaseCount, 1);
+        EXPECT_EQ(pipe.items_queued(), 1);
+        pipe.process_queue(1);
+        EXPECT_EQ(broker.pool_stats().ItemsInUse, 0);
+        EXPECT_EQ(broker.pool_stats().AllocCount, 2);
+        EXPECT_EQ(broker.pool_stats().ReleaseCount, 2);
+        EXPECT_EQ(pipe.rx_count(), 1);
+        EXPECT_EQ(pipe.last_rx_id(), 0xAA);
+        EXPECT_EQ(pipe.last_rx_msg_len(), 240);
+    }
+}
+
 }

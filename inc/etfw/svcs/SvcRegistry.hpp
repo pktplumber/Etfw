@@ -43,6 +43,8 @@ namespace etfw
                     UNREGISTERED_ERR,
                     ALREADY_REGISTERED,
                     UNKNOWN_REGISTRATION_ERROR,
+
+                    COUNT
                 };
 
                 static constexpr StatusStr_t ErrStrLkup[] =

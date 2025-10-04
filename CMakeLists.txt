@@ -48,28 +48,28 @@ include_directories(${PUBLIC_INCLUDE_DIR})
 # ~~~~~~ Src ~~~~~~
 add_subdirectory(${ETL_DIR})
 
-file(GLOB_RECURSE OSAL_SRCS
+file(GLOB_RECURSE OSAL_SRC
     CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/os/*.cpp)
 
-file(GLOB_RECURSE FW_SRCS
+file(GLOB_RECURSE FW_SRC
     CONFIGURE_DEPENDS
     ${ETFW_SVC_SRC}/*.cpp)
 
-file(GLOB_RECURSE MSG_SRCS
+file(GLOB_RECURSE MSG_SRC
     CONFIGURE_DEPENDS
     ${ETFW_MSG_SRC}/*.cpp)
 
 # ~~~~~~ Targets ~~~~~~
-add_library(osal_impl STATIC ${OSAL_SRCS})
+add_library(osal_impl STATIC ${OSAL_SRC})
 target_include_directories(osal_impl PUBLIC "${PUBLIC_INCLUDE_DIR}/etfw")
 target_compile_features(osal_impl PUBLIC cxx_std_17)
 
-add_library(svcs_impl STATIC ${FW_SRCS})
+add_library(svcs_impl STATIC ${FW_SRC})
 target_include_directories(svcs_impl PUBLIC "${PUBLIC_INCLUDE_DIR}/etfw")
 target_compile_features(svcs_impl PUBLIC cxx_std_17)
 
-add_library(msg_impl STATIC ${MSG_SRCS})
+add_library(msg_impl STATIC ${MSG_SRC})
 target_include_directories(msg_impl PUBLIC "${PUBLIC_INCLUDE_DIR}/etfw")
 target_compile_features(msg_impl PUBLIC cxx_std_17)
 

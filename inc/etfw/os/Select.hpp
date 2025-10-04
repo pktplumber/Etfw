@@ -20,7 +20,9 @@ namespace Os {
                     OK,
                     TIMEOUT,
                     SET_FULL,
-                    INVALID_FD
+                    INVALID_FD,
+
+                    COUNT
                 };
 
                 static constexpr StatusStr_t ErrStrLkup[] =

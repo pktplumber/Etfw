@@ -20,7 +20,9 @@ namespace Os {
                 OS_INIT_ERR,
                 LOCK_FAILURE,
                 TIMEOUT,
-                UNLOCK_FAILURE
+                UNLOCK_FAILURE,
+
+                COUNT
             };
 
             /// @brief Return code string representation
@@ -29,6 +31,7 @@ namespace Os {
                 "Success",
                 "OS initialization error",
                 "OS Lock failure",
+                "Lock timeout",
                 "Unlock failure"
             };
         };

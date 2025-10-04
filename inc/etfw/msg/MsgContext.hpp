@@ -18,6 +18,8 @@ namespace msg {
             enum class Code : uint32_t
             {
                 OK,
+
+                COUNT
             };
 
             static constexpr StatusStr_t ErrStrLkup[] =
