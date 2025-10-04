@@ -12,14 +12,6 @@ MsgBufPool::Stats::Stats(size_t num_items):
     ReleaseCount(0)
 {}
 
-MsgBufPool::Stats::Stats():
-    NumItems(100),
-    ItemsInUse(0),
-    WaterMark(0),
-    AllocCount(0),
-    ReleaseCount(0)
-{}
-
 MsgBufPool::Stats& MsgBufPool::Stats::operator++()
 {
     ++AllocCount;
@@ -52,7 +44,9 @@ MsgBufPool::Stats MsgBufPool::Stats::operator--(int)
     return tmp;
 }
 
-MsgBufPool::MsgBufPool()
+/// TODO: need to remove/replace with actual num items for stats
+MsgBufPool::MsgBufPool():
+    stats_(100)
 {
     auto stat = mut_.init();
     assert(stat.success() &&

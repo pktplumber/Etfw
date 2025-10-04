@@ -157,7 +157,8 @@ namespace etfw::msg
         {}
 
     private:
-        BlockingMsgQueue<iPkt*, QueueDepth> queue_;
+        /// TODO: change type to shared message
+        BlockingMsgQueue<void*, QueueDepth> queue_;
     };
 
     /// @brief Synchronous pipe with static message subscription.
@@ -238,7 +239,8 @@ namespace etfw::msg
 
     private:
         using message_packet = etl::message_packet<TMsgs...>;
-        BlockingMsgQueue<iPkt*, QueueDepth> queue_;
+        /// TODO: change type to shared message
+        BlockingMsgQueue<void*, QueueDepth> queue_;
 
         inline void process_pkt(message_packet& pkt)
         {

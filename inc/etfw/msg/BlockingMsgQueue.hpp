@@ -14,6 +14,8 @@ class BlockingMsgQueue
     static_assert(QDepth <= 255, "Max Q Depth exceeded");
 
     public:
+        /// @brief Default constructor
+        /// @details Will attempt to initialize internal semaphore
         BlockingMsgQueue()
         {
             ETFW_ASSERT(Sem.init() == Os::CountSem::Status::OP_OK,

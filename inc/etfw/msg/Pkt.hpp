@@ -7,45 +7,49 @@
 
 namespace etfw::msg
 {
-    struct iPkt
-    {
-        MsgId_t MsgId;
-        size_t BufSz;
-    };
-
+    /// @brief Message reference counter type
     class RefCount : public etl::reference_counter<std::atomic_int32_t>
     {
     public:
+        /// @brief Using atomic_int32. TODO: add compile time checks for atomic support
         using Base_t = etl::reference_counter<std::atomic_int32_t>;
 
-        RefCount():
-            Base_t()
-        {}
+        /// @brief Default constructor. Sets reference count to 0.
+        RefCount();
 
-        RefCount(int32_t init_val):
-            Base_t()
-        {
-            set_reference_count(init_val);
-        }
+        /// @brief Construct with initial value
+        /// @param init_val Initial reference count value
+        RefCount(int32_t init_val);
     };
 
+    /// @brief Forward declare pool for use by message buffer class
     class MsgBufPool;
 
+    /// @brief Message buffer. Allocated from pool
     class Buf : public etl::ireference_counted_message
     {
     public:
+        /// @brief Reference count type
         using RefCount_t = RefCount;
 
+        /// @brief Gets the etl::imessage at the data field
+        /// @return Message interface
         etl::imessage& get_message() override
         {
             return *static_cast<etl::imessage*>(data());
         }
 
+        /// @brief Gets a const reference to the etl::imessage
+        /// @return Message interface
         const etl::imessage& get_message() const override
         {
             return *static_cast<const etl::imessage*>(data());
         }
 
+        /// @brief Converts the data field to the message type
+        /// @warning Size of message must be <= the allocated msg size
+        /// @tparam MsgT Message type
+        /// @return Message object
         template <typename MsgT>
         MsgT& get_message_type()
         {
@@ -62,16 +66,21 @@ namespace etfw::msg
             return *static_cast<MsgT*>(data());
         }
 
+        /// @brief Get message reference counter
+        /// @return Reference counter
         etl::ireference_counter& get_reference_counter() override
         {
             return ref_count_;
         }
 
+        /// @brief Get const message reference counter
+        /// @return Const reference counter
         const etl::ireference_counter& get_reference_counter() const override
         {
             return ref_count_;
         }
 
+        /// @brief Return the buffer to it's owner pool.
         void release() override;
 
         uint8_t* data_buf();
@@ -81,17 +90,23 @@ namespace etfw::msg
             return reinterpret_cast<const uint8_t*>(this+1);
         }
 
+        /// @brief Get the message buffer's data field
+        /// @return Pointer to the message data
         void* data()
         {
             return (this+1);
         }
 
+        /// @brief Get the message buffer's data field
+        /// @return Const pointer to the message data
         const void* data() const
         {
             return (this+1);
         }
 
-        size_t buf_size();
+        /// @brief Get allocated buffer size
+        /// @return Buffer size
+        size_t buf_size() const;
 
         friend class MsgBufPool;
 

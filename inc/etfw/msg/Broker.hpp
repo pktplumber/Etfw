@@ -130,56 +130,36 @@ namespace etfw::msg {
         MsgIdContainer IdList;
     };
 
-    /// @brief Message broker class
-    //using Broker = etl::message_broker;
+    /// @brief Shared message alias
+    using SharedMsg = etl::shared_message;
 
-    class SharedMsg : public etl::shared_message
-    {
-    public:
-        using Base_t = etl::shared_message;
-        using Base_t::Base_t;
-
-        template <typename TPool>
-        static SharedMsg create_from_size(TPool& owner, size_t size)
-        {
-            etl::ireference_counted_message* p_msg = owner.allocate_raw(size);
-            assert(p_msg != nullptr && "Failed to allocate message");
-            if (p_msg != nullptr)
-            {
-                p_msg->get_reference_counter().set_reference_count(1U);
-            }
-
-            return SharedMsg(*p_msg);
-        }
-    };
-
-
-
+    /// @brief Message broker class. Routes messages between pipes
     class Broker : etl::message_broker
     {
     public:
-        struct Stats
-        {
-            size_t RegisteredPipes;
-            size_t NumSendCalls;
-            size_t AllocateFailures;
-
-            Stats();
-        };
-
+        // Base class
         using Base_t = etl::message_broker;
 
         /// TODO: un-expose these methods after refactor
         using Base_t::receive;
         using Base_t::subscribe;
 
+        /// @brief Broker statistics
+        struct Stats
+        {
+            size_t RegisteredPipes;     //< Number of pipes registered to this broker
+            size_t NumSendCalls;        //< Number of times "send" has been called
+            size_t AllocateFailures;    //< Number of message buffer allocation failures
+
+            Stats();
+        };
+
+        /// @brief Default constructor
         Broker();
 
-        void send(const iMsg& msg, const size_t msg_sz);
-
         /// @brief Send copy of message
-        /// @tparam TMsg 
-        /// @param msg 
+        /// @tparam TMsg Message type to send
+        /// @param msg Message to copy and send
         template <typename TMsg>
         void send(const TMsg& msg)
         {
@@ -197,6 +177,10 @@ namespace etfw::msg {
             }
         }
 
+        /// @brief Construct a message in place and send
+        /// @tparam TMsg Message type to send
+        /// @tparam ...TArgs Constructor argument types
+        /// @param ...args Constructor arguments
         template <typename TMsg, typename... TArgs>
         void send(TArgs&&... args)
         {
@@ -224,16 +208,20 @@ namespace etfw::msg {
         /// @param[in] msg_buf Message buffer to send
         void send_buf(Buf& msg_buf);
 
-        /// @brief Register a pipe
-        /// @param pipe 
+        /// @brief Add a pipe to the broker's send list.
+        /// @param pipe Pipe to register
         void register_pipe(iPipe& pipe);
 
+        /// @brief Remove a pipe from the broker's send list
+        /// @param pipe Pipe to unregister
         void unregister_pipe(iPipe& pipe);
 
         /// @brief Get the internal memory pool statistics
         /// @return Message buffer pool statistics
         inline const MsgBufPool::Stats& pool_stats() const
-        { return msg_pool_.stats(); }
+        {
+            return msg_pool_.stats();
+        }
 
         /// @brief Get the broker's statistics
         /// @return Broker's internal statistics
@@ -250,6 +238,8 @@ namespace etfw::msg {
         /// @return Pointer to message buffer class. Nullptr on failure.
         Buf* get_message_buf(const size_t buf_sz);
 
+        /// @brief Return an unused message buffer returned from "get_message_buf"
+        /// @param buf Buffer to return
         void return_message_buf(Buf* buf);
 
     private:
@@ -257,15 +247,4 @@ namespace etfw::msg {
         Os::Mutex lock_;
         Stats stats_;
     };
-
-
-    class iSubscription
-    {
-    public:
-        using Base_t = etl::message_broker::subscription;
-        using MsgSpan_t = etl::message_broker::message_id_span_t;
-
-
-    };
-
 }

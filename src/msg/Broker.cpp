@@ -16,11 +16,6 @@ Broker::Broker():
         "Failed to initialize broker lock");
 }
 
-void Broker::send(const iMsg& msg, const size_t msg_sz)
-{
-    //SharedMsg msg = SharedMsg::create_from_size(msg_pool_, msg_sz);
-}
-
 void Broker::send_buf(Buf& msg_buf)
 {
     if (msg_buf.buf_size() >= sizeof(iBaseMsg))

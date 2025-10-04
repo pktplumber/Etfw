@@ -46,8 +46,6 @@ stats_mon::MsgTbl StatsMonMsgTbl{
 
 #define APP1_GEN_STATS_PERIOD   20
 
-etl::fixed_sized_memory_block_allocator<200, 4, 20> alloc_;
-
 int main()
 {
     app1::App app1;

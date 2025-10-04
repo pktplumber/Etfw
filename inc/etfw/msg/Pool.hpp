@@ -1,9 +1,7 @@
 
 #pragma once
 
-#include <etl/shared_message.h>
 #include <etl/reference_counted_message_pool.h>
-#include <etl/fixed_sized_memory_block_allocator.h>
 
 /// TODO: place in #ifdef guards to check if using stdlib
 #include <atomic>
@@ -14,7 +12,7 @@
 
 namespace etfw::msg
 {
-
+    /// @brief Message buffer pool
     class MsgBufPool : public etl::ireference_counted_message_pool
     {
     public:
@@ -32,8 +30,6 @@ namespace etfw::msg
             /// @brief Construct stats with NumItems set
             /// @param num_items Number of items in the pool
             Stats(size_t num_items);
-
-            Stats();
 
             /// @brief Checks if any items are available to be allocated
             /// @return True if items can be allocated. False if the pool is

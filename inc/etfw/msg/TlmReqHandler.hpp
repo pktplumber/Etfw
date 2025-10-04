@@ -24,16 +24,18 @@ namespace etfw::msg
         /// @tparam MsgT Message type to get
         /// @return The message instance
         template <typename MsgT>
-        inline MsgT& get()
-            { return etl::get<MsgT>(msgs_); }
+        inline MsgT& get() { return etl::get<MsgT>(msgs_); }
 
         /// @brief Get a const message object
         /// @tparam MsgT Message type
         /// @return Const message instance
         template <typename MsgT>
-        inline const MsgT& get() const
-            { return etl::get<MsgT>(msgs_); }
+        inline const MsgT& get() const { return etl::get<MsgT>(msgs_); }
 
+        /// @brief Find telemetry ID from a tlm request ID
+        /// @tparam RequestId Received request ID
+        /// @tparam Idx Used internally. Set to 0
+        /// @return TLM request ID
         template <MsgId_t RequestId, size_t Idx = 0>
         decltype(auto) find_by_req_id()
         {
@@ -95,6 +97,8 @@ namespace etfw::msg
             tlm_req_pipe_(*this, 2)
         {}
 
+        /// @brief Get tlm messages
+        /// @return TLM message container
         inline MsgStorage_t& messages() { return tlm_msgs_; }
 
         /// @brief Send tlm request handler. Will find and send the target
