@@ -322,18 +322,20 @@ static inline GlobTaskStats_t GlobalTaskStats;
                     THREAD_CREATE_ERROR,
                     INVALID_STATE,
                     JOIN_ERROR,
+
+                    COUNT
                 };
                 
                 static constexpr StatusStr_t ErrStrLkup[] =
                 {
                     "Success",
-                    "Operation not supported"
+                    "Operation not supported",
                     "Invalid stack configuration",
                     "Invalid thread routine configuration",
-                    "Invalid thread priority"
-                    "Thread creation error"
-                    "Invalid task state for operation"
-                    "OS join operation failure"
+                    "Invalid thread priority",
+                    "Thread creation error",
+                    "Invalid task state for operation",
+                    "OS join operation failure",
                 };
             };
 

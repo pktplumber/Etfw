@@ -2,7 +2,7 @@
 #include "etfw/svcs/App.hpp"
 #include "etfw/svcs/SvcCfg.hpp"
 #include "etfw/svcs/AppChild.hpp"
-#include "etfw/svcs/msg/Router.hpp"
+#include "etfw/msg/Router.hpp"
 
 static constexpr etfw::SvcId_t AppId = 1;
 static constexpr uint8_t AppPriority = 19;
@@ -98,7 +98,7 @@ class Child2 : public etfw::AppChild<Child2, Child2Cfg>
         }
 
     private:
-        etfw::Msg::QueuedRouter<Child2, 2, LocalCmd> local_m_handler;
+        etfw::msg::QueuedRouter<Child2, 2, LocalCmd> local_m_handler;
 };
 
 class ExampleApp : public etfw::App<ExampleApp, AppCfg>
@@ -193,7 +193,7 @@ class ExampleApp : public etfw::App<ExampleApp, AppCfg>
         }
     
     private:
-        etfw::Msg::QueuedRouter<ExampleApp, 5,
+        etfw::msg::QueuedRouter<ExampleApp, 5,
             StartChildSvc, StopChildSvc, CommunicateWithChild> cmd_handler;
         Child1 child1;
         Child2 child2;

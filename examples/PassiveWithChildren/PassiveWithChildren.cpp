@@ -2,7 +2,7 @@
 #include "etfw/svcs/App.hpp"
 #include "etfw/svcs/SvcCfg.hpp"
 #include "etfw/svcs/AppChild.hpp"
-#include "etfw/svcs/msg/Router.hpp"
+#include "etfw/msg/Router.hpp"
 
 static constexpr etfw::SvcId_t AppId = 1;
 
@@ -166,7 +166,7 @@ class ExampleApp : public etfw::App<ExampleApp, AppCfg>
         AppChild<Child1Cfg> child1;
         AppChild<Child2Cfg> child2;
 
-        etfw::Msg::Router<ExampleApp, 1, StartChild2Cmd> msg_rtr;
+        etfw::msg::Router<ExampleApp, 1, StartChild2Cmd> msg_rtr;
 };
 
 int main()

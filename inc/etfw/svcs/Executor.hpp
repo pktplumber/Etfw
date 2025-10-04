@@ -32,6 +32,8 @@ namespace etfw
                     UNKNOWN_ID,
                     INITIALIZATION_ERR,
                     START_FAILURE,
+
+                    COUNT
                 };
 
                 static constexpr StatusStr_t ErrStrLkup[] =

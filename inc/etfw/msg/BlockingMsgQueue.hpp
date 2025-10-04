@@ -6,7 +6,7 @@
 #include "etfw_assert.hpp"
 
 namespace etfw {
-namespace Msg {
+namespace msg {
 
 template <typename T, size_t QDepth>
 class BlockingMsgQueue
@@ -14,6 +14,8 @@ class BlockingMsgQueue
     static_assert(QDepth <= 255, "Max Q Depth exceeded");
 
     public:
+        /// @brief Default constructor
+        /// @details Will attempt to initialize internal semaphore
         BlockingMsgQueue()
         {
             ETFW_ASSERT(Sem.init() == Os::CountSem::Status::OP_OK,
@@ -29,6 +31,16 @@ class BlockingMsgQueue
                 return true;
             }
             // Queue full
+            return false;
+        }
+
+        bool push(T& item)
+        {
+            if (_queue.push(item))
+            {
+                Sem.give();
+                return true;
+            }
             return false;
         }
 
@@ -55,6 +67,8 @@ class BlockingMsgQueue
             }
             return false;
         }
+
+        inline bool full() const { return _queue.full(); }
 
     private:
         Os::CountSem Sem;

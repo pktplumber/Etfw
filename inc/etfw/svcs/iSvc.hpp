@@ -49,12 +49,14 @@ class iSvc
                 INVALID_STATE,      //< 
                 ALREADY_REGISTERED,
                 UNKNOWN_REGISTRATION_ERR,
+
+                COUNT
             };
 
             /// @brief Status code string messages
             static constexpr StatusStr_t ErrStrLkup[] =
             {
-                "Operation success",
+                "Success",
                 "Svc ID is taken",
                 "Svc unregistered",
                 "Svc registry full",
@@ -62,11 +64,13 @@ class iSvc
                 "Svc reinitialization error",
                 "Svc started error",
                 "Svc stopped error",
-                "General OS method error"
-                "Child service is already registered"
+                "General OS method error",
+                "Child service is already registered",
                 "No memory available for operation",
                 "Unknown error",
-                "Operation not allowed in the current state"
+                "Operation not allowed in the current state",
+                "Service already registered",
+                "Unknown registration error"
             };
         };
 

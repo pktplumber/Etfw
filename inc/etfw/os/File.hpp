@@ -35,7 +35,7 @@ namespace Os
             struct StatusTrait {
                 enum class Code {
                     OK, //!<  Operation was successful
-                    DOESNT_EXIST, //!<  File doesn't exist (for read)
+                    DOES_NOT_EXIST, //!<  File doesn't exist (for read)
                     NO_SPACE, //!<  No space left
                     NO_PERMISSION, //!<  No permission to read/write file
                     BAD_SIZE, //!<  Invalid size parameter
@@ -45,17 +45,19 @@ namespace Os
                     INVALID_MODE, //!< Mode for file access is invalid for current operation
                     INVALID_ARGUMENT, //!< Invalid argument passed in
                     OTHER_ERROR, //!<  A catch-all for other errors. Have to look in implementation-specific code
+
+                    COUNT
                 };
 
                 static constexpr StatusStr_t ErrStrLkup[] =
                 {
                     "Success",
                     "File does not exist",
-                    "No available memory for operation",
-                    "Persmission denied for operation",
+                    "No memory available for operation",
+                    "Permission denied for operation",
                     "Invalid size argument",
                     "File is not open",
-                    "Create filaure. File already exists",
+                    "File already exists",
                     "Operation unsupported",
                     "Invalid access mode",
                     "Invalid argument",

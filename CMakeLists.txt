@@ -10,8 +10,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -Wall")
 set(ETFW_INC "${CMAKE_CURRENT_SOURCE_DIR}/inc/")
 set(ETFW_SVC_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/svcs")
 set(ETFW_OSAL_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/os")
+set(ETFW_MSG_SRC "${CMAKE_CURRENT_SOURCE_DIR}/src/msg")
 set(DEFAULT_OSAL_SRC_DIR "${ETFW_OSAL_SRC}/posix")
 set(ETL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/etl")
+set(TEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/test")
 
 # ~~~~~~ Osal option ~~~~~~
 set(OSAL_SRC_DIR "" CACHE PATH "Path to the b-specific source directory to compile")
@@ -23,8 +25,20 @@ if (NOT EXISTS "${OSAL_SRC_DIR}")
 endif()
 message(STATUS "Using OSAL dir : ${OSAL_SRC_DIR}")
 
-# ~~~~~~ Examples option ~~~~~~
+# ~~~~~~ Options ~~~~~~
+option(ENABLE_UNIT_TESTS "Enable building unit tests" OFF)
+option(UT_COVERAGE "Generate code coverage report with unit tests" OFF)
 option(EXAMPLES "Compile examples" OFF)
+
+# Optimizations must be turned off if generating line coverage
+if (ENABLE_UNIT_TESTS)
+    # Only add options if unit tests are enabled
+    if(UT_COVERAGE)
+        message(STATUS "Building unit tests with coverage reports")
+        add_compile_options(--coverage -O0 -g)
+        add_link_options(--coverage)
+    endif()
+endif()
 
 # ~~~~~~ Inc ~~~~~~
 set(PUBLIC_INCLUDE_DIR "${ETFW_INC}")
@@ -34,27 +48,36 @@ include_directories(${PUBLIC_INCLUDE_DIR})
 # ~~~~~~ Src ~~~~~~
 add_subdirectory(${ETL_DIR})
 
-file(GLOB_RECURSE OSAL_SRCS
+file(GLOB_RECURSE OSAL_SRC
     CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/os/*.cpp)
 
-file(GLOB_RECURSE FW_SRCS
+file(GLOB_RECURSE FW_SRC
     CONFIGURE_DEPENDS
     ${ETFW_SVC_SRC}/*.cpp)
 
+file(GLOB_RECURSE MSG_SRC
+    CONFIGURE_DEPENDS
+    ${ETFW_MSG_SRC}/*.cpp)
+
 # ~~~~~~ Targets ~~~~~~
-add_library(osal_impl STATIC ${OSAL_SRCS})
+add_library(osal_impl STATIC ${OSAL_SRC})
 target_include_directories(osal_impl PUBLIC "${PUBLIC_INCLUDE_DIR}/etfw")
 target_compile_features(osal_impl PUBLIC cxx_std_17)
 
-add_library(svcs_impl STATIC ${FW_SRCS})
+add_library(svcs_impl STATIC ${FW_SRC})
 target_include_directories(svcs_impl PUBLIC "${PUBLIC_INCLUDE_DIR}/etfw")
 target_compile_features(svcs_impl PUBLIC cxx_std_17)
+
+add_library(msg_impl STATIC ${MSG_SRC})
+target_include_directories(msg_impl PUBLIC "${PUBLIC_INCLUDE_DIR}/etfw")
+target_compile_features(msg_impl PUBLIC cxx_std_17)
 
 add_library(etfw STATIC)
 target_sources(etfw PRIVATE
     $<TARGET_OBJECTS:svcs_impl>
     $<TARGET_OBJECTS:osal_impl>
+    $<TARGET_OBJECTS:msg_impl>
 )
 
 # Public include directories
@@ -67,6 +90,14 @@ target_link_libraries(etfw
 
 # Set C++ standard
 target_compile_features(etfw PUBLIC cxx_std_17)
+
+# Add tests if enabled
+if(ENABLE_UNIT_TESTS)
+    message(STATUS "Adding unit tests")
+    # Add test executable to build
+    enable_testing()
+    add_subdirectory(${TEST_DIR})
+endif()
 
 # Compile examples if included
 if(EXAMPLES)

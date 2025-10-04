@@ -26,7 +26,7 @@ File::Status File::err_to_status(int err)
             status = File::Status::Code::NO_SPACE;
             break;
         case ENOENT:
-            status = File::Status::Code::DOESNT_EXIST;
+            status = File::Status::Code::DOES_NOT_EXIST;
             break;
         // Fallthrough intended
         case EPERM:
