@@ -156,6 +156,37 @@ namespace etfw::msg
         }
     };
 
+    template <MsgId_t MsgIdV>
+    struct message : public iBaseMsg
+    {
+        message(size_t sz):
+            iBaseMsg(MsgIdV, sz)
+        {}
+
+        static constexpr MsgId_t ID = MsgIdV;
+    };
+
+    template <typename TDerived, MsgId_t MsgIdV>
+    struct static_message : public message<MsgIdV>
+    {
+        using Base_t = message<MsgIdV>;
+        static_message():
+            Base_t(sizeof(TDerived))
+        {}
+    };
+
+    /// @brief Wakeup message type
+    /// @tparam TModId Application/module ID
+    template <MsgModuleId_t TModId>
+    struct wakeup_msg : public static_message<
+        wakeup_msg<TModId>, to_msg_id<TModId, WAKEUP, 0>()>
+    {};
+
+    template <typename TDerived, MsgModuleId_t ModIdV, FuncId_t FuncIdV>
+    struct command_msg : public static_message<
+        TDerived, to_msg_id<ModIdV, MsgType_t::CMD, 0>()>
+    {};
+    
     template <typename DerivedT>
     inline const DerivedT& convert(const etl::imessage& msg)
     {

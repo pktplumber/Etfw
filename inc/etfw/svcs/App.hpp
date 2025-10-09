@@ -6,16 +6,21 @@
 #include "msg/Broker.hpp"
 #include "Runner.hpp"
 #include "SvcCfg.hpp"
+#include "msg/Context.hpp"
 
 namespace etfw
 {
     /// @brief ETFW application interface
+    ///
+    /// TODO: consider changing inherited classes to access mixin
+    ///  I.e. this would look like 'class iApp : public Svc<AppAccess>'
     class iApp : public iSvc
     {
     public:
         /// TODO: probably need to refactor to some sort of list
         using ChildRegistry = iSvc::Registry<iSvc, MAX_NUM_CHILD_SVCS>;
         using Status = iSvc::Status;
+        using Comms = msg::AppContext;
 
         /// @brief App framework proxy. Used to grant access to framework methods
         class AppFwProxy
@@ -84,6 +89,8 @@ namespace etfw
         /// @param msg Message to send
         static void send_cmd(const etl::imessage& msg);
 
+        static void send_cmd(const msg::iBaseMsg& msg);
+
         // Provide access to proxy class
         friend class AppFwProxy;
 
@@ -130,6 +137,8 @@ namespace etfw
         /// @param msg_ids Run-time/dynamic container of status message IDs
         static void subscribe_status(etl::imessage_router& handler,
             msg::MsgIdContainer &msg_ids);
+
+        static Comms comms;
 
     private:
         /// @brief Child app registry

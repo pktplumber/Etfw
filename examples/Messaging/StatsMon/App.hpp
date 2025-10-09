@@ -18,7 +18,8 @@ namespace stats_mon
         using Base_t = etfw::App<App, Cfg>;
         using Base_t::Status;
         using Base_t::RunState;
-        using WakeupPipe_t = etfw::msg::QueuedRouter<App, 1, WakeupMsg>;
+        using WakeupPipe_t = etfw::msg::QueuedWakeupPipe<App, AppId>;
+        using WakeupMsg_t = etfw::msg::wakeup_msg<AppId>;
 
         static constexpr uint32_t WakeupTimeoutMs = 1500;
 
@@ -33,19 +34,13 @@ namespace stats_mon
 
         Status app_init()
         {
-            subscribe_cmd(wakeup_pipe_.subscription());
+            comms.register_pipe(wakeup_pipe_);
             return Status::Code::OK;
         }
 
         RunState run_loop()
         {
-            WakeupPipe_t::DequeueStat stat = wakeup_pipe_.receive_msgs(
-                WakeupTimeoutMs
-            );
-            if (stat == WakeupPipe_t::DequeueStat::TIMEOUT)
-            {
-                log(etfw::LogLevel::WARNING, "Wakeup timeout");
-            }
+            wakeup_pipe_.wait(WakeupTimeoutMs);
             return RunState::OK;
         }
 
@@ -54,7 +49,7 @@ namespace stats_mon
             return Status::Code::OK;
         }
 
-        void receive(const WakeupMsg& wakeup)
+        void on_wakeup()
         {
             log(etfw::LogLevel::DEBUG, "Woke up");
             stats_msg_handler_.process_stats_messages();

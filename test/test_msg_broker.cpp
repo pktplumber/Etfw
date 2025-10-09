@@ -136,7 +136,7 @@ class UtPipe : public etfw::msg::iPipe
 public:
     using Base_t = etfw::msg::iPipe;
 
-    UtPipe(etfw::msg::iPipe::PipeId_t id):
+    UtPipe(etfw::msg::iPipe::Priority_t id):
         Base_t(id),
         MsgsReceived(0),
         LastRxMsgId(etfw::msg::MsgIdRsvd),
@@ -144,7 +144,7 @@ public:
     {}
 
     UtPipe(
-        etfw::msg::iPipe::PipeId_t id,
+        etfw::msg::iPipe::Priority_t id,
         msg_init_list msg_ids
     ):
         Base_t(id, msg_ids),

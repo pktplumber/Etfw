@@ -68,7 +68,17 @@ class BlockingMsgQueue
             return false;
         }
 
+        T& front(const Os::TimeMs_t timeout_ms)
+        {
+            Sem.take(timeout_ms);
+            return _queue.front();
+        }
+
         inline bool full() const { return _queue.full(); }
+
+        inline bool empty() const { return _queue.empty(); }
+
+        inline bool pop() { return _queue.pop(); }
 
     private:
         Os::CountSem Sem;

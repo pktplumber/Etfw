@@ -11,29 +11,12 @@
  * 
  */
 
-#include "etfw/svcs/App.hpp"
-#include <etfw/msg/Pipe.hpp>
-
 #include "App1/ActiveApp1.hpp"
 #include "App2/App2.hpp"
 #include "StatsMon/App.hpp"
 
 #include "MsgScheduler.hpp"
 
-#include <etfw/msg/Pool.hpp>
-
-template <etfw::SvcId_t TAppId>
-using ActiveAppCfg_t = etfw::SvcCfg<TAppId, etfw::ActiveSvcCfg<AppPriority, AppStackSz>>;
-
-// ~~~~~~~~~~~~~~~ App 3 configuration ~~~~~~~~~~~~~~~
-
-static constexpr etfw::SvcId_t App3Id = 3;
-
-/// @brief Passive application configuration
-struct ActiveApp3Cfg : public ActiveAppCfg_t<App3Id>
-{
-    static constexpr const char* NAME = "EX_APP_3";
-};
 
 stats_mon::MsgTbl StatsMonMsgTbl{
     stats_mon::MsgTbl::Entry(app1::msg::Stats::ID),

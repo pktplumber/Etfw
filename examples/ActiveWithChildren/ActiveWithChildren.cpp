@@ -3,6 +3,7 @@
 #include "etfw/svcs/SvcCfg.hpp"
 #include "etfw/svcs/AppChild.hpp"
 #include "etfw/msg/Router.hpp"
+#include "etfw/msg/Message.hpp"
 
 static constexpr etfw::SvcId_t AppId = 1;
 static constexpr uint8_t AppPriority = 19;
@@ -32,171 +33,171 @@ struct Child2Cfg : public etfw::ChildSvcCfg<Child2Priority, Child2StackSz>
 /// @brief One shot child task. Loops 5 times and exits
 class Child1 : public etfw::AppChild<Child1, Child1Cfg>
 {
-    public:
-        using Base_t = etfw::AppChild<Child1, Child1Cfg>;
-        using RunState = Base_t::RunState;
-        using SvcStatus = Base_t::Status;
+public:
+    using Base_t = etfw::AppChild<Child1, Child1Cfg>;
+    using RunState = Base_t::RunState;
+    using SvcStatus = Base_t::Status;
 
-        Child1():
-            Base_t(Child1Id, "CHILD_1")
-        {}
+    Child1():
+        Base_t(Child1Id, "CHILD_1")
+    {}
 
-        RunState run_loop()
+    RunState run_loop()
+    {
+        iters_left--;
+        log(etfw::LogLevel::INFO, "Iterations left = %d", iters_left);
+
+        usleep(500000);
+
+        RunState run_state = RunState::OK;
+        if (iters_left == 0)
         {
-            iters_left--;
-            log(etfw::LogLevel::INFO, "Iterations left = %d", iters_left);
-
-            usleep(500000);
-
-            RunState run_state = RunState::OK;
-            if (iters_left == 0)
-            {
-                run_state = RunState::DONE;
-            }
-
-            return run_state;
+            run_state = RunState::DONE;
         }
-    
-        private:
-            int iters_left = 5;
+
+        return run_state;
+    }
+
+private:
+    int iters_left = 5;
 };
 
 class Child2 : public etfw::AppChild<Child2, Child2Cfg>
 {
-    public:
-        static constexpr uint8_t ID = 22;
-        using Base_t = etfw::AppChild<Child2, Child2Cfg>;
-        using RunState = Base_t::RunState;
-        using SvcStatus = Base_t::Status;
+public:
+    static constexpr uint8_t ID = 22;
+    using Base_t = etfw::AppChild<Child2, Child2Cfg>;
+    using RunState = Base_t::RunState;
+    using SvcStatus = Base_t::Status;
 
-        struct LocalCmd : public etl::message<1>
-        {
-            uint16_t Num;
+    struct LocalCmd : public etl::message<1>
+    {
+        uint16_t Num;
 
-            LocalCmd(uint16_t num): Num(num) {}
-        };
+        LocalCmd(uint16_t num): Num(num) {}
+    };
 
-        Child2():
-            Base_t(Child2Id, "CHILD_2"),
-            local_m_handler(*this)
-        {}
+    Child2():
+        Base_t(Child2Id, "CHILD_2"),
+        local_m_handler(*this)
+    {}
 
-        RunState run_loop()
-        {
-            local_m_handler.process_msg_queue(1000);
-            return RunState::OK;
-        }
+    RunState run_loop()
+    {
+        local_m_handler.process_msg_queue(1000);
+        return RunState::OK;
+    }
 
-        void receive(const LocalCmd& cmd)
-        {
-            log(etfw::LogLevel::INFO, "Got local command. Num = %d", cmd.Num);
-        }
+    void receive(const LocalCmd& cmd)
+    {
+        log(etfw::LogLevel::INFO, "Got local command. Num = %d", cmd.Num);
+    }
 
-        void send_cmd(const etl::imessage& cmd)
-        {
-            local_m_handler.receive(cmd);
-        }
+    void send_cmd(const etl::imessage& cmd)
+    {
+        local_m_handler.receive(cmd);
+    }
 
-    private:
-        etfw::msg::QueuedRouter<Child2, 2, LocalCmd> local_m_handler;
+private:
+    etfw::msg::QueuedRouter<Child2, 2, LocalCmd> local_m_handler;
 };
 
 class ExampleApp : public etfw::App<ExampleApp, AppCfg>
 {
-    public:
-        using Base_t = etfw::App<ExampleApp, AppCfg>;
-        using RunState = Base_t::RunState;
-        using AppStatus = Base_t::Status;
+public:
+    using Base_t = etfw::App<ExampleApp, AppCfg>;
+    using RunState = Base_t::RunState;
+    using AppStatus = Base_t::Status;
 
-        struct StartChildSvc : public etl::message<1>
+    struct StartChildSvc : public etl::message<1>
+    {
+        uint8_t SvcId;
+
+        StartChildSvc(): SvcId(0) {}
+        StartChildSvc(uint8_t svc_id): SvcId(svc_id) {}
+    };
+
+    struct StopChildSvc : public etl::message<2>
+    {
+        uint8_t SvcId;
+
+        StopChildSvc(): SvcId(0) {}
+        StopChildSvc(uint8_t svc_id): SvcId(svc_id) {}
+    };
+
+    struct CommunicateWithChild : public etl::message<3>
+    {
+        uint16_t Num;
+
+        CommunicateWithChild(uint16_t num): Num(num) {}
+    };
+
+    ExampleApp():
+        Base_t(),
+        cmd_handler(*this)
+    {}
+
+    AppStatus app_init()
+    {
+        subscribe_cmd(cmd_handler.subscription());
+        child1.init();
+        child2.init();
+        
+        return AppStatus::Code::OK;
+    }
+
+    RunState run_loop()
+    {
+        // Blocking. Will automatically call command handlers as messages
+        // are dequeued
+        cmd_handler.process_msg_queue(1000);
+        log(etfw::LogLevel::INFO, "Processed queue");
+        return RunState::OK;
+    }
+
+    AppStatus app_cleanup()
+    {
+        child1.cleanup();
+        child2.cleanup();
+        return AppStatus::Code::OK;
+    }
+
+    void receive(const StartChildSvc& cmd)
+    {
+        log(etfw::LogLevel::INFO, "Got StartChildSvc command for svc ID %d",
+            cmd.SvcId);
+        switch (cmd.SvcId)
         {
-            uint8_t SvcId;
-
-            StartChildSvc(): SvcId(0) {}
-            StartChildSvc(uint8_t svc_id): SvcId(svc_id) {}
-        };
-
-        struct StopChildSvc : public etl::message<2>
-        {
-            uint8_t SvcId;
-
-            StopChildSvc(): SvcId(0) {}
-            StopChildSvc(uint8_t svc_id): SvcId(svc_id) {}
-        };
-
-        struct CommunicateWithChild : public etl::message<3>
-        {
-            uint16_t Num;
-
-            CommunicateWithChild(uint16_t num): Num(num) {}
-        };
-
-        ExampleApp():
-            Base_t(),
-            cmd_handler(*this)
-        {}
-
-        AppStatus app_init()
-        {
-            subscribe_cmd(cmd_handler.subscription());
-            child1.init();
-            child2.init();
-            
-            return AppStatus::Code::OK;
+        case Child1Id:
+            start_child(child1);
+            break;
+        
+        case Child2Id:
+            start_child(child2);
+            break;
+        
+        default:
+            break;
         }
+    }
 
-        RunState run_loop()
-        {
-            // Blocking. Will automatically call command handlers as messages
-            // are dequeued
-            cmd_handler.process_msg_queue(1000);
-            log(etfw::LogLevel::INFO, "Processed queue");
-            return RunState::OK;
-        }
+    void receive(const StopChildSvc& cmd)
+    {
+        log(etfw::LogLevel::INFO, "Got StopChildSvc command for svc ID %d",
+            cmd.SvcId);
+    }
 
-        AppStatus app_cleanup()
-        {
-            child1.cleanup();
-            child2.cleanup();
-            return AppStatus::Code::OK;
-        }
+    void receive(const CommunicateWithChild& cmd)
+    {
+        log(etfw::LogLevel::INFO, "Sending command to child2");
+        child2.send_cmd(Child2::LocalCmd(cmd.Num));
+    }
 
-        void receive(const StartChildSvc& cmd)
-        {
-            log(etfw::LogLevel::INFO, "Got StartChildSvc command for svc ID %d",
-                cmd.SvcId);
-            switch (cmd.SvcId)
-            {
-            case Child1Id:
-                start_child(child1);
-                break;
-            
-            case Child2Id:
-                start_child(child2);
-                break;
-            
-            default:
-                break;
-            }
-        }
-
-        void receive(const StopChildSvc& cmd)
-        {
-            log(etfw::LogLevel::INFO, "Got StopChildSvc command for svc ID %d",
-                cmd.SvcId);
-        }
-
-        void receive(const CommunicateWithChild& cmd)
-        {
-            log(etfw::LogLevel::INFO, "Sending command to child2");
-            child2.send_cmd(Child2::LocalCmd(cmd.Num));
-        }
-    
-    private:
-        etfw::msg::QueuedRouter<ExampleApp, 5,
-            StartChildSvc, StopChildSvc, CommunicateWithChild> cmd_handler;
-        Child1 child1;
-        Child2 child2;
+private:
+    etfw::msg::QueuedRouter<ExampleApp, 5,
+        StartChildSvc, StopChildSvc, CommunicateWithChild> cmd_handler;
+    Child1 child1;
+    Child2 child2;
 };
 
 int main()

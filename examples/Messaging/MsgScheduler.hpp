@@ -1,7 +1,8 @@
 
 #pragma once
 
-#include "etfw/svcs/App.hpp"
+#include <etfw/svcs/App.hpp>
+#include "etfw/msg/Context.hpp"
 #include <etfw/msg/Message.hpp>
 #include <etl/array.h>
 #include <initializer_list>
@@ -49,7 +50,7 @@ public:
     {
         usleep(SchedPeriodMs*1000);
         wkup_count_++;
-        //printf("Sched wokeup. Count = %d\n", wkup_count_);
+        //printf("Sched woke up. Count = %d\n", wkup_count_);
         for (auto& entry: sched_tbl_)
         {
             //printf("Trying entry ID %X. In use = %d, %d\n", entry.MsgId, entry.InUse, entry.WakeupCount);
@@ -58,7 +59,8 @@ public:
                 (wkup_count_ % entry.WakeupCount) == 0)
             {
                 etfw::msg::iBaseMsg msg(entry.MsgId);
-                etfw::iApp::send_cmd(msg);
+                etfw::msg::glob.send_msg(msg);
+                //etfw::iApp::send_cmd(msg);
             }
         }
     }

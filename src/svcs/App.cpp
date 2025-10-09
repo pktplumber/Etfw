@@ -58,6 +58,11 @@ void iApp::send_cmd(const etl::imessage& msg)
     CmdBroker.receive(msg);
 }
 
+void iApp::send_cmd(const msg::iBaseMsg& msg)
+{
+    CmdBroker.send(msg);
+}
+
 void iApp::subscribe_msg(msg::Subscription& subscription)
 {
     CmdBroker.subscribe(subscription);
@@ -100,6 +105,11 @@ void iApp::subscribe_status(etl::imessage_router& handler,
     msg::Subscription subscription(handler, msg_ids);
     subscribe_status(subscription);
 }
+
+//iApp::Comms& iApp::msg()
+//{
+//    return etfw::msg::app_ctx;
+//}
 
 
 // ~~~~~~~~ AppFwProxy method definitions ~~~~~~~~
